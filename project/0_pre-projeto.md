@@ -1,4 +1,6 @@
-# Introdução pré-projeto
+# Editor Colaborativo Descentralizado
+
+## Introdução pré-projeto
 
 Usuários distantes e conectados através da internet podem trabalhar juntos em documentos utilizando Sistemas de Edição Colaborativa. Estes sistemas permitem que usuários realizem operações em paralelo em um arquivo e que cada um veja as modificações dos outros em tempo real. Com essa funcionalidade, pessoas distantes fisicamente podem colaborar com pontos de vista, escrever documentos de texto de forma mais rápida e até trabalhar em *pair-programming*.
 
