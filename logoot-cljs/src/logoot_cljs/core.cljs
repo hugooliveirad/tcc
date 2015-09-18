@@ -125,8 +125,14 @@
    ))
 
 (defn insert
-  [doc pos clock content]
-  (assoc doc [pos clock] content))
+  [doc pid content]
+  (assoc doc pid content))
 
 ;; in this case, should this position be even possible? would it be before or after [[2 1]]?
-(insert document [[1 2] [3 4]] 5 "New content")
+(insert document [[[1 2] [3 4]] 5] "New content")
+
+(defn delete
+  [doc pid]
+  (dissoc doc pid))
+
+(delete document [[[2 1]] 0])
