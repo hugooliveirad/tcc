@@ -107,17 +107,26 @@
 (compare-pid [[[2 4]] 5] [[[2 8] [3 5]] 5])
 
 
-(sorted-map-by compare-pid
- ;; hashmap of a line
- [[[0 0]] nil]
- :lb
+(def document
+  (sorted-map-by
+   compare-pid
+   ;; hashmap of a line
+   [[[0 0]] nil]
+   :lb
 
- [[[2 1]] 0]
- "This is an example of a Logoot document"
+   [[[2 1]] 0]
+   "This is an example of a Logoot document"
 
- [[[1 1] [2 2]] 0]
- "This is a line inserted between [1 1] and [2 2]"
+   [[[1 1] [2 2]] 0]
+   "This is a line inserted between [1 1] and [2 2]"
 
- [[[MAX_INT 0]] nil]
- :le
- )
+   [[[MAX_INT 0]] nil]
+   :le
+   ))
+
+(defn insert
+  [doc pos clock content]
+  (assoc doc [pos clock] content))
+
+;; in this case, should this position be even possible? would it be before or after [[2 1]]?
+(insert document [[1 2] [3 4]] 5 "New content")
