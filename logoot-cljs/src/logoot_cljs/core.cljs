@@ -33,60 +33,31 @@
 
 ;; each site has a logical clock, incremented each time a line is created
 
-;; a logoot document would be like
-
-;; vector of lines
-[
- ;; hashmap of a line
- {:pid {:pos [{:line 0 :site 0}]
-        :clock nil}
-  :content :lb}
-
- {:pid {:pos [{:line 1 :site 1}]
-        :clock 0}
-  :content "This is an example of a Logoot document"}
-
- {:pid {:pos [{:line 1 :site 1} {:line 1 :site 5}]
-        :clock 1}
-  :content "The replica on site 5 find a place between 1 and 1"}
-
- {:pid {:pos [{:line 1 :site 3}]
-        :clock 2}
-  :content "This line was the third made on replica 3"}
-
- {:pid {:pos [{:line 32000 :site 0}]
-        :clock nil}
-  :content :le}
-]
-
 (def MAX_INT 32767)
 
-(sorted-map
- ;; hashmap of a line
- [[[0 0]] nil]
- :lb
+;; a logoot document would be like
 
- [[[2 1]] 0]
- "This is an example of a Logoot document"
+(def document
+  ;; a hashmap were keys are the pid of the line
+  ;; and the values are the content
+  (sorted-map-by
+   ;; created with this sort fn
+   compare-pid
+   ;; vector of pid
+   ;;|line |site |clock
+   [[[0     0]]   nil]
+   ;; content
+   :lb
 
- [[[1 1] [2 2]] 0]
- "This is a line inserted between [1 1] and [2 2]"
+   [[[2 1]] 0]
+   "This is an example of a Logoot document"
 
- [[[5 5]] 0]
- "This is the fifth line on replica 5"
+   [[[1 1] [2 2]] 0]
+   "This is a line inserted between [1 1] and [2 2]"
 
- [[[4 2000]] 3000]
- "This is the forth line on replica 2000"
-
- [[[1 1] [1 5]] 1]
- "The replice on site 5 find a place between 1 and 1"
-
- [[[1 3]] 2]
- "This line was the third made on replica 3"
-
- [[[MAX_INT 0]] nil]
- :le
- )
+   [[[MAX_INT 0]] nil]
+   :le
+   ))
 
 (defn compare-pid
   "Compare two pids. If all intersecting pos identifier are equal, the bigger
@@ -105,24 +76,6 @@
   )
 
 (compare-pid [[[2 4]] 5] [[[2 8] [3 5]] 5])
-
-
-(def document
-  (sorted-map-by
-   compare-pid
-   ;; hashmap of a line
-   [[[0 0]] nil]
-   :lb
-
-   [[[2 1]] 0]
-   "This is an example of a Logoot document"
-
-   [[[1 1] [2 2]] 0]
-   "This is a line inserted between [1 1] and [2 2]"
-
-   [[[MAX_INT 0]] nil]
-   :le
-   ))
 
 (defn insert
   [doc pid content]
