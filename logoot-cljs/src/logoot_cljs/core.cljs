@@ -100,6 +100,11 @@
 
 ;; (rand-int-bet 5 10)
 
+(defn rand-pos-bet
+  "Generates a random position with lines between two numbers"
+  [site l1 l2]
+  [(rand-int-bet l1 l2) site])
+
 (defn gen-pos
   "Generate a position between two positions"
   [site pos1 pos2]
@@ -109,17 +114,18 @@
          p2 (second pos-couple)
          pos-acc []]
     (cond
+      ;; exhausted positions looking for spaces
       ;; generate position between p1 line and MAX_INT
       (empty? positions)
       (do (println p1)
-          (conj pos-acc p1 [(rand-int-bet (first p1) MAX_INT) site]))
+          (conj pos-acc p1 (rand-pos-bet site (first p1) MAX_INT)))
 
       (< (first p1) (first p2))
       (if (> site (second p1))
         ;; generate position between p1 line and p2 line
-        (conj pos-acc [(rand-int-bet (first p1) (first p2)) site])
+        (conj pos-acc (rand-pos-bet site (first p1) (first p2)))
         ;; generate position between p1 line and MAX_INT
-        (conj pos-acc p1 [(rand-int-bet (first p1) MAX_INT) site]))
+        (conj pos-acc p1 (rand-pos-bet site (first p1) MAX_INT)))
 
       :else
       (let [positions (rest positions)
@@ -128,7 +134,6 @@
             p1 (first pos-couple)
             p2 (second pos-couple)]
         (recur positions pos-couple p1 p2 pos-acc)))))
-
 
 (gen-pos 3 [[1 2] [3 4]] [[1 6] [7 8]])
 
