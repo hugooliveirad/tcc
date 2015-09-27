@@ -50,6 +50,8 @@
       1
       -1)))
 
+(compare-pid [[[2 4]] 5] [[[2 8] [3 5]] 5])
+
 ;; a logoot document would be like
 
 (def document
@@ -82,7 +84,53 @@
    [[[0 0]] nil]       :lb
    [[[MAX_INT 0]] nil] :le))
 
-(compare-pid [[[2 4]] 5] [[[2 8] [3 5]] 5])
+(defn zip
+  "Creates a list of grouped elements by index"
+  [& colls]
+  (apply map list colls))
+
+;; (zip [1 2 3] [1 2 3])
+
+(defn rand-int-bet
+  "Returns a random integer between x (inclusive) and y (exclusive)."
+  [x y]
+  (if (> x y)
+    (+ y (rand-int (- x y)))
+    (+ x (rand-int (- y x)))))
+
+;; (rand-int-bet 5 10)
+
+(defn gen-pos
+  "Generate a position between two positions"
+  [site pos1 pos2]
+  (loop [positions (zip pos1 pos2)
+         pos-couple (first positions)
+         p1 (first pos-couple)
+         p2 (second pos-couple)
+         pos-acc []]
+    (cond
+      ;; generate position between p1 line and MAX_INT
+      (empty? positions)
+      (do (println p1)
+          (conj pos-acc p1 [(rand-int-bet (first p1) MAX_INT) site]))
+
+      (< (first p1) (first p2))
+      (if (> site (second p1))
+        ;; generate position between p1 line and p2 line
+        (conj pos-acc [(rand-int-bet (first p1) (first p2)) site])
+        ;; generate position between p1 line and MAX_INT
+        (conj pos-acc p1 [(rand-int-bet (first p1) MAX_INT) site]))
+
+      :else
+      (let [positions (rest positions)
+            pos-couple (first positions)
+            pos-acc (conj pos-acc p1)
+            p1 (first pos-couple)
+            p2 (second pos-couple)]
+        (recur positions pos-couple p1 p2 pos-acc)))))
+
+
+(gen-pos 3 [[1 2] [3 4]] [[1 6] [7 8]])
 
 (defn insert
   [doc pid content]
