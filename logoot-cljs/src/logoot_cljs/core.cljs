@@ -74,6 +74,14 @@
    :le
    ))
 
+(defn create-doc
+  "Creates an empty logoot document, with its beggining and finish lines"
+  []
+  (sorted-map-by
+   compare-pid
+   [[[0 0]] nil]       :lb
+   [[[MAX_INT 0]] nil] :le))
+
 (compare-pid [[[2 4]] 5] [[[2 8] [3 5]] 5])
 
 (defn insert
