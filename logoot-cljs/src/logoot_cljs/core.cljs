@@ -1,5 +1,4 @@
-(ns logoot-cljs.core
-  (:require [clojure.browser.repl :as repl]))
+(ns logoot-cljs.core)
 
 ;; (defonce conn
 ;;   (repl/connect "http://localhost:9000/repl"))
@@ -35,6 +34,22 @@
 
 (def MAX_INT 32767)
 
+
+(defn compare-pid
+  "Compare two pids. If all intersecting pos identifier are equal, the bigger
+  pos vector will win."
+  [[pos1] [pos2]]
+  ;; 1 if (> (nth 0 pos1) (nth 0 pos2)), -1 if not. if 0, will iterate
+  ;; going up until the end of the position vector
+  (if-let [result (first (filter #(not= 0 %)
+                                 (map compare pos1 pos2)))]
+    result
+    ;; if every pos was the same, let the bigger pos vector win
+    ;; e.g. (> [[1 2] [3 4]] [[1 2]]) => true
+    (if (> (count pos1) (count pos2))
+      1
+      -1)))
+
 ;; a logoot document would be like
 
 (def document
@@ -58,22 +73,6 @@
    [[[MAX_INT 0]] nil]
    :le
    ))
-
-(defn compare-pid
-  "Compare two pids. If all intersecting pos identifier are equal, the bigger
-  pos vector will win."
-  [[pos1] [pos2]]
-  ;; 1 if (> (nth 0 pos1) (nth 0 pos2)), -1 if not. if 0, will iterate
-  ;; going up until the end of the position vector
-  (if-let [result (first (filter #(not= 0 %)
-                                 (map compare pos1 pos2)))]
-    result
-    ;; if every pos was the same, let the bigger pos vector win
-    ;; e.g. (> [[1 2] [3 4]] [[1 2]]) => true
-    (if (> (count pos1) (count pos2))
-      1
-      -1))
-  )
 
 (compare-pid [[[2 4]] 5] [[[2 8] [3 5]] 5])
 
