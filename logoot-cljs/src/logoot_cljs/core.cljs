@@ -73,8 +73,7 @@
    "This is a line inserted between [1 1] and [2 2]"
 
    [[[MAX_INT 0]] nil]
-   :le
-   ))
+   :le))
 
 (defn create-doc
   "Creates an empty logoot document, with its beggining and finish lines"
