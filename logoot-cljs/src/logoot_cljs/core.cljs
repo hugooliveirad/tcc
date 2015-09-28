@@ -116,8 +116,7 @@
       ;; exhausted positions looking for spaces
       ;; generate position between p1 line and MAX_INT
       (empty? positions)
-      (do (println p1)
-          (conj pos-acc p1 (rand-pos-bet site (first p1) MAX_INT)))
+      (conj pos-acc p1 (rand-pos-bet site (first p1) MAX_INT))
 
       (< (first p1) (first p2))
       (if (> site (second p1))
