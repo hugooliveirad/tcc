@@ -137,6 +137,20 @@
 
 (gen-pos 3 [[1 2] [3 4]] [[1 6] [7 8]])
 
+(defn pid->index
+  "Returns the index of a given pid"
+  [doc pid]
+  (first (keep-indexed #(if (= pid %2) %1) (keys doc))))
+
+;; (pid->index document [[[1 1] [2 2]] 0])
+
+(defn index->pid
+  "Returns the pid of a given index"
+  [doc index]
+  (get doc (nth (keys doc) index)))
+
+;; (index->pid document 1)
+
 (defn insert
   [doc pid content]
   (assoc doc pid content))
