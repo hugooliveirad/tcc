@@ -34,7 +34,6 @@
 
 (def MAX_INT 32767)
 
-
 (defn compare-pid
   "Compare two pids. If all intersecting pos identifier are equal, the bigger
   pos vector will win."
@@ -135,7 +134,7 @@
             p2 (second pos-couple)]
         (recur positions pos-couple p1 p2 pos-acc)))))
 
-(gen-pos 3 [[1 2] [3 4]] [[1 6] [7 8]])
+;; (gen-pos 3 [[1 2] [3 4]] [[1 6] [7 8]])
 
 (defn pid->index
   "Returns the index of a given pid"
@@ -156,10 +155,10 @@
   (assoc doc pid content))
 
 ;; in this case, should this position be even possible? would it be before or after [[2 1]]?
-(insert document [[[1 2] [3 4]] 5] "New content")
+;; (insert document [[[1 2] [3 4]] 5] "New content")
 
 (defn delete
   [doc pid]
   (dissoc doc pid))
 
-(delete document [[[2 1]] 0])
+;; (delete document [[[2 1]] 0])
