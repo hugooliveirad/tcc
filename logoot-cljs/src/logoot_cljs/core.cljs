@@ -1,4 +1,5 @@
-(ns logoot-cljs.core)
+(ns logoot-cljs.core
+    (:require [clojure.string :as string]))
 
 ;; (defonce conn
 ;;   (repl/connect "http://localhost:9000/repl"))
@@ -190,11 +191,16 @@
 (defn doc->logoot-str
   "Given a logoot document, returns a string representation of it"
   [doc]
-  ;; TODO
-  )
+  (string/join "\n"
+               ;; lines
+               (map (fn [[[pos clock] content]]
+                      ;; content
+                      (str "(((" (string/join "."
+                                              ;; merges positions with clock and content
+                                              (map #(str "[" (string/join ", " %1) "]") pos)) "), " clock "), " content ")"))
+                    doc)))
 
-;; (doc->logoot-str document)
-
+(doc->logoot-str document)
 
 ;; eventually these should be tests
 
