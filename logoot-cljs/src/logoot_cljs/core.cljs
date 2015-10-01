@@ -157,7 +157,7 @@
 (defn index->pid
   "Returns the pid of a given index"
   [doc index]
-  (get doc (nth (keys doc) index)))
+  (nth (keys doc) index))
 
 ;; (index->pid document 1)
 
