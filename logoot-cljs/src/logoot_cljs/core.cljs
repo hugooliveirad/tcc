@@ -90,6 +90,7 @@
   (apply map list colls))
 
 ;; (zip [1 2 3] [1 2 3])
+;; (zip [[1 2] [6 4]] [[1 6] [9 4]])
 
 (defn rand-int-bet
   "Returns a random integer between x (inclusive) and y (exclusive)."
@@ -110,31 +111,41 @@
   [site pos1 pos2]
   (loop [positions (zip pos1 pos2)
          pos-couple (first positions)
-         p1 (first pos-couple)
-         p2 (second pos-couple)
          pos-acc []]
-    (cond
-      ;; exhausted positions looking for spaces
-      ;; generate position between p1 line and MAX_INT
-      (empty? positions)
-      (conj pos-acc p1 (rand-pos-bet site (first p1) MAX_INT))
+    (let [[p1 p2] pos-couple]
+      (cond
+        ;; exhausted positions looking for spaces
+        (empty? positions)
+        (if-not (nil? p1)
+          ;; generate position between p1 line and MAX_INT
+          (conj pos-acc p1 (rand-pos-bet site (first p1) MAX_INT))
+          ;; generate position between pos-acc first line and MAX_INT
+          (conj pos-acc (rand-pos-bet site (ffirst pos-acc) MAX_INT)))
 
-      (< (first p1) (first p2))
-      (if (> site (second p1))
-        ;; generate position between p1 line and p2 line
-        (conj pos-acc (rand-pos-bet site (first p1) (first p2)))
-        ;; generate position between p1 line and MAX_INT
-        (conj pos-acc p1 (rand-pos-bet site (first p1) MAX_INT)))
+        (< (first p1) (first p2))
+        (if (> site (second p1))
+          ;; generate position between p1 line and p2 line
+          (conj pos-acc (rand-pos-bet site (first p1) (first p2)))
+          ;; generate position between p1 line and MAX_INT
+          (conj pos-acc p1 (rand-pos-bet site (first p1) MAX_INT)))
 
-      :else
-      (let [positions (rest positions)
-            pos-couple (first positions)
-            pos-acc (conj pos-acc p1)
-            p1 (first pos-couple)
-            p2 (second pos-couple)]
-        (recur positions pos-couple p1 p2 pos-acc)))))
+        :else
+        (let [positions (rest positions)
+              pos-couple (first positions)
+              pos-acc (conj pos-acc p1)]
+          (recur positions pos-couple pos-acc))))))
 
-;; (gen-pos 3 [[1 2] [3 4]] [[1 6] [7 8]])
+;; (gen-pos 3 [[1 2] [6 4]] [[1 6] [9 4]])
+;;   => [[1 2] [6 4] [29728 3]]
+;; (gen-pos 7 [[1 2] [6 4]] [[1 6] [9 4]])
+;;   => [[1 2] [8 7]]
+;; (gen-pos 7 [[1 2]] [[1 6] [9 4]])
+;;   => [[1 2] [16998 7]]
+;; (gen-pos 3 [[1 2]] [[1 2]])
+;;   => [[1 2] [27335 3]]
+;; (gen-pos 3 [[1 2]] [[5 2]])
+;;   => [[2 3]]
+
 
 (defn pid->index
   "Returns the index of a given pid"
