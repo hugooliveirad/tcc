@@ -162,17 +162,35 @@
 ;; (index->pid document 1)
 
 (defn insert
+  "Inserts the content into pid key of the given document"
   [doc pid content]
   (assoc doc pid content))
 
 ;; in this case, should this position be even possible? would it be before or after [[2 1]]?
 ;; (insert document [[[1 2] [3 4]] 5] "New content")
 
+(defn insert-after
+  "Inserts the content after a line index"
+  [doc index]
+  ;; TODO
+  )
+
+;; (insert-after document 2)
+
 (defn delete
+  "Removes pid key from the given document"
   [doc pid]
   (dissoc doc pid))
 
 ;; (delete document [[[2 1]] 0])
+
+(defn doc->logoot-str
+  "Given a logoot document, returns a string representation of it"
+  [doc]
+  ;; TODO
+  )
+
+;; (doc->logoot-str document)
 
 
 ;; eventually these should be tests
