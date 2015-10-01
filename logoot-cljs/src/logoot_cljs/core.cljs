@@ -171,11 +171,14 @@
 
 (defn insert-after
   "Inserts the content after a line index"
-  [doc index]
-  ;; TODO
-  )
+  [doc site clock index content]
+  (let [[pos1] (index->pid doc index)
+        [pos2] (index->pid doc (inc index))]
+    (->> (gen-pos site pos1 pos2)
+         (#(conj [] % clock))
+         (#(insert doc % content)))))
 
-;; (insert-after document 2)
+;; (insert-after document 2 20 0 "yo!")
 
 (defn delete
   "Removes pid key from the given document"
