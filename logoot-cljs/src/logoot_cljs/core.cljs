@@ -188,17 +188,41 @@
 
 ;; (delete document [[[2 1]] 0])
 
+(defn doc->hash-map
+  "Given a logoot document, transform each line to a hash-map"
+  [doc]
+  (map (fn [[[pos clock] content]]
+         {:pos pos :clock clock :content content})
+       doc))
+
+(defn pos->logoot-str
+  "Given a position, returns a string representation of it"
+  [pos]
+  (->> pos
+       (map (partial string/join ", "))
+       (map (fn [x] (str "[" x "]")))
+       ((partial string/join "."))
+       ))
+
 (defn doc->logoot-str
   "Given a logoot document, returns a string representation of it"
   [doc]
-  (string/join "\n"
-               ;; lines
-               (map (fn [[[pos clock] content]]
-                      ;; content
-                      (str "(((" (string/join "."
-                                              ;; merges positions with clock and content
-                                              (map #(str "[" (string/join ", " %1) "]") pos)) "), " clock "), " content ")"))
-                    doc)))
+  (->> doc
+       ;; get doc info as a hash-map
+       (doc->hash-map)
+
+       ;; transform positions to string
+       (#(map (fn [line]
+                (->> (:pos line)
+                     (pos->logoot-str)
+                     ((partial assoc line :pos))
+                     ))
+              %))
+
+       ;; merge position strings and more infos into logoot-str
+       (#(map (fn [line]
+                  (str "(((" (:pos line) "), " (:clock line) "), " (:content line) ")"))
+              %))))
 
 (doc->logoot-str document)
 
