@@ -54,5 +54,32 @@
     (t/testing "sorting"
       (t/is (= [[[1 1]] 0] (first (second (sut/insert doc [[[1 1]] 0] "Test"))))))))
 
+(t/deftest testing-zip
+  (t/testing "accept any seq"
+    (t/is (seq? (sut/zip '(1 2) '(1 2))))
+    (t/is (seq? (sut/zip [1 2] [1 2])))
+    (t/is (seq? (sut/zip #{1 2} #{1 2})))
+    (t/is (seq? (sut/zip {:a 1 :b 2} {:a 1 :b 2})))
+    (t/is (seq? (sut/zip (seq '(1 2 3)) (seq '(1 2 3))))))
+
+  (t/testing "same length"
+    (t/is (= (seq [[1 2] [3 4]]) (sut/zip [1 3] [2 4])))
+    (t/is (= (seq [[3 4] [5 6]]) (sut/zip [3 5] [4 6])))
+    (t/is (not= (seq [[1 3] [1 3]]) (sut/zip [1 3] [1 3]))))
+
+  (t/testing "different length"
+    (t/is (= (seq [[1 2]]) (sut/zip [1] [2 3])))
+    (t/is (= (seq [[1 2]]) (sut/zip [1 3] [2])))
+    (t/is (not= (seq [[1]]) (sut/zip [1] [])))
+    (t/is (not= (seq [[1 2]]) (sut/zip [1] [2] []))))
+
+  (t/testing "multiple collections"
+    (t/is (= (seq [[1 2 3] [4 5 6]]) (sut/zip [1 4] [2 5] [3 6])))
+    (t/is (= (seq [[1 2]]) (sut/zip [1 2 3 4 5 6 7] [2])))
+    (t/is (not= (seq [[1 4] [1 2]]) (sut/zip [1 4] [1 2]))))
+
+  (t/testing "nil"
+    (t/is (not= nil (sut/zip [])))
+    (t/is (not= nil (sut/zip [nil] [nil] [nil] nil)))))
 
 (t/run-tests)

@@ -6,8 +6,6 @@
 
 ;; (enable-console-print!)
 
-(println "Hello world!")
-
 ;; logoot implementation in cljs
 
 ;; insert(pos line)
@@ -52,7 +50,7 @@
         1
         -1))))
 
-(compare-pid [[[2 4]] 5] [[[2 8] [3 5]] 5])
+;; (compare-pid [[[2 4]] 5] [[[2 8] [3 5]] 5])
 
 ;; a logoot document would be like
 
