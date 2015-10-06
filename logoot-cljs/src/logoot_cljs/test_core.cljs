@@ -82,4 +82,28 @@
     (t/is (not= nil (sut/zip [])))
     (t/is (not= nil (sut/zip [nil] [nil] [nil] nil)))))
 
+(t/deftest testing-rand-int-bet
+  (t/testing "simple"
+    (let [samples (->> (repeatedly #(sut/rand-int-bet 1 5))
+                       (take 40))
+          every-sample? #(every? % samples)]
+      (t/is (every-sample? #(integer? %)) "integer")
+      (t/is (every-sample? #(> % 1)) "greater than first number (exclusive)")
+      (t/is (every-sample? #(< % 5)) "less than second number (exclusive)")))
+
+  (t/testing "nothing between"
+    (t/is (nil? (sut/rand-int-bet 1 1)) "nil (no integer between)")))
+
+(t/deftest testing-rand-pos-bet
+  (t/testing "simple"
+    (let [samples (->> (repeatedly #(sut/rand-pos-bet 1 1 5))
+                       (take 40))
+          every-sample? #(every? % samples)]
+      (t/is (every-sample? #(integer? (first %))) "line a integer")
+      (t/is (every-sample? #(integer? (second %))) "site a integer")
+      (t/is (every-sample? #(= 1 (second %))) "site as defined")
+      (t/is (every-sample? #(= 2 (count %))) "a pos couple")
+      (t/is (every-sample? #(> (first %) 1)) "line greater than first line")
+      (t/is (every-sample? #(< (second %) 5)) "line less than second line"))))
+
 (t/run-tests)
