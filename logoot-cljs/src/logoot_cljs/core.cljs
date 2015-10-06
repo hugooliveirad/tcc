@@ -92,13 +92,21 @@
 ;; (zip [[1 2] [6 4]] [[1 6] [9 4]])
 
 (defn rand-int-bet
-  "Returns a random integer between x (inclusive) and y (exclusive)."
+  "Returns a random integer between x (exclusive) and y (exclusive). Nil
+  if there isn't integer between two numbers"
   [x y]
-  (if (> x y)
-    (+ y (rand-int (- x y)))
-    (+ x (rand-int (- y x)))))
+  (cond
+    ;; there isn't at least one integer between numbers
+    (<= (Math/abs (- x y)) 1)
+    nil
 
-;; (rand-int-bet 5 10)
+    (> x y)
+    (+ 1 y (rand-int (- x y 1)))
+
+    (< x y)
+    (+ 1 x (rand-int (- y x 1)))))
+
+;; (rand-int-bet 5 7)
 
 (defn rand-pos-bet
   "Generates a random position with lines between two numbers"
