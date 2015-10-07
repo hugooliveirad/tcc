@@ -207,7 +207,7 @@
   (->> pos
        (map (partial string/join ", "))
        (map (fn [x] (str "[" x "]")))
-       ((partial string/join "."))
+       (string/join ".")
        ))
 
 (defn doc->logoot-str
@@ -218,19 +218,17 @@
        (doc->hash-map)
 
        ;; transform positions to string
-       (#(map (fn [line]
+       (map (fn [line]
                 (->> (:pos line)
                      (pos->logoot-str)
-                     ((partial assoc line :pos))
-                     ))
-              %))
+                     (assoc line :pos)
+                     )))
 
        ;; merge position strings and more infos into logoot-str
-       (#(map (fn [line]
-                  (str "(((" (:pos line) "), " (:clock line) "), " (:content line) ")"))
-              %))))
+       (map (fn [line]
+                  (str "(((" (:pos line) "), " (:clock line) "), " (:content line) ")")))))
 
-;; (doc->logoot-str document)
+(doc->logoot-str document)
 
 ;; eventually these should be tests
 
@@ -240,16 +238,16 @@
 ;; e.g. when we user "a" added a line and deleted it, but user "b" received the
 ;; delete operation before the addition operation
 
-(= (->> (create-doc)
-        (#(insert % [[[1 1]] 0] "First line yo"))
-        (#(insert % [[[1 1] [1 3]] 0] "Second line yo (should be deleted)"))
-        (#(delete % [[[1 1] [1 3]] 0]))
-        (#(insert % [[[1 1] [1 2]] 0] "Second line yo (should exist)")))
-   (->> (create-doc)
-        (#(delete % [[[1 1] [1 3]] 0]))
-        (#(insert % [[[1 1] [1 3]] 0] "Second line yo (should be deleted)"))
-        (#(insert % [[[1 1]] 0] "First line yo"))
-        (#(insert % [[[1 1] [1 2]] 0] "Second line yo (should exist)"))))
+(= (-> (create-doc)
+       (insert [[[1 1]] 0] "First line yo")
+       (insert [[[1 1] [1 3]] 0] "Second line yo (should be deleted)")
+       (delete [[[1 1] [1 3]] 0])
+       (insert [[[1 1] [1 2]] 0] "Second line yo (should exist)"))
+   (-> (create-doc)
+       (delete [[[1 1] [1 3]] 0])
+       (insert [[[1 1] [1 3]] 0] "Second line yo (should be deleted)")
+       (insert [[[1 1]] 0] "First line yo")
+       (insert [[[1 1] [1 2]] 0] "Second line yo (should exist)")))
 
 ;; one way to solve this kind of issue is to make dissoc and assoc operations
 ;; write to a history of operations. this can cause a bigger overhead to the
