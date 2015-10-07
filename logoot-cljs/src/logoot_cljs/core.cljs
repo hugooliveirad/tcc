@@ -111,7 +111,9 @@
 (defn rand-pos-bet
   "Generates a random position with lines between two numbers"
   [site l1 l2]
-  [(rand-int-bet l1 l2) site])
+  (if-let [rand-line (rand-int-bet l1 l2)]
+    [[rand-line site]]
+    (into [[l1 site]] (rand-pos-bet site l1 MAX_INT))))
 
 (defn gen-pos
   "Generate a position between two positions"
@@ -125,16 +127,16 @@
         (empty? positions)
         (if-not (nil? p1)
           ;; generate position between p1 line and MAX_INT
-          (conj pos-acc p1 (rand-pos-bet site (first p1) MAX_INT))
+          (into pos-acc (concat [p1] (rand-pos-bet site (first p1) MAX_INT)))
           ;; generate position between pos-acc first line and MAX_INT
-          (conj pos-acc (rand-pos-bet site (ffirst pos-acc) MAX_INT)))
+          (into pos-acc (rand-pos-bet site (ffirst pos-acc) MAX_INT)))
 
         (< (first p1) (first p2))
         (if (> site (second p1))
           ;; generate position between p1 line and p2 line
-          (conj pos-acc (rand-pos-bet site (first p1) (first p2)))
+          (into pos-acc (rand-pos-bet site (first p1) (first p2)))
           ;; generate position between p1 line and MAX_INT
-          (conj pos-acc p1 (rand-pos-bet site (first p1) MAX_INT)))
+          (into pos-acc (concat [p1] (rand-pos-bet site (first p1) MAX_INT))))
 
         :else
         (let [positions (rest positions)
