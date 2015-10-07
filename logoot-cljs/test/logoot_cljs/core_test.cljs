@@ -1,6 +1,6 @@
 (ns logoot-cljs.test-core
   (:require [logoot-cljs.core :as sut]
-            [clojure.test :as t]))
+            [cljs.test :as t]))
 
 (def MAX_INT 32767)
 
