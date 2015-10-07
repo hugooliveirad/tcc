@@ -97,13 +97,24 @@
 (t/deftest testing-rand-pos-bet
   (t/testing "simple"
     (let [samples (->> (repeatedly #(sut/rand-pos-bet 1 1 5))
-                       (take 40))
+                       (take 40)
+                       (map first))
           every-sample? #(every? % samples)]
       (t/is (every-sample? #(integer? (first %))) "line a integer")
       (t/is (every-sample? #(integer? (second %))) "site a integer")
       (t/is (every-sample? #(= 1 (second %))) "site as defined")
       (t/is (every-sample? #(= 2 (count %))) "a pos couple")
       (t/is (every-sample? #(> (first %) 1)) "line greater than first line")
-      (t/is (every-sample? #(< (second %) 5)) "line less than second line"))))
+      (t/is (every-sample? #(< (second %) 5)) "line less than second line")))
+
+  (t/testing "two positions"
+    (let [samples (->> (repeatedly #(sut/rand-pos-bet 1 2 3))
+                       (take 40))
+          samples-zip (map #(apply sut/zip %) samples)
+          samples-lines (mapcat first samples-zip)
+          samples-sites (map second samples-zip)]
+
+      (t/is (every? #(> (count %) 1) samples) "a more than one couple position")
+      (t/is (every? integer? samples-lines) "a position where every line is an integer"))))
 
 (t/run-tests)
