@@ -203,4 +203,16 @@
     (t/is (= 3 (count new-doc)) "a document with three lines")
     (t/is (= content (nth (vals new-doc) 1)) "second line the one we added")))
 
+(t/deftest testing-delete
+  (t/testing "removed"
+    (let [new-doc (sut/delete document [[[1 2]] 0])]
+
+      (t/is (= 4 (count new-doc)) "removes a line")
+      (t/is (nil? (sut/pid->index new-doc [[[1 2]] 0])) "removes the specified line")))
+
+  (t/testing "not removed"
+    (let [new-doc (sut/delete document [[[111111 1]] 0])]
+
+      (t/is (= document new-doc) "should alter document if pid don't exist"))))
+
 (t/run-tests)
