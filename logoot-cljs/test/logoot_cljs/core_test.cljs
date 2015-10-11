@@ -185,4 +185,11 @@
   (t/is (= [[[2 2]] 0] (sut/index->pid document 2)) "correct pid")
   (t/is (nil? (sut/index->pid document 6)) "nil pid"))
 
+(t/deftest testing-insert
+  (let [pid [[[1 2]] 0]
+        new-doc (sut/insert (sut/create-doc) pid "Yo")]
+
+    (t/is (= 1 (sut/pid->index new-doc pid)) "the second line")
+    (t/is (= "Yo" (nth (vals new-doc) 1)))))
+
 (t/run-tests)
