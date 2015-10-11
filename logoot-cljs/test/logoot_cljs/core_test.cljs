@@ -192,4 +192,15 @@
     (t/is (= 1 (sut/pid->index new-doc pid)) "the second line")
     (t/is (= "Yo" (nth (vals new-doc) 1)))))
 
+(t/deftest testing-insert-after
+  (let [doc (sut/create-doc)
+        site 1
+        clock 1
+        index 0
+        content "Yo"
+        new-doc (sut/insert-after doc site clock index content)]
+
+    (t/is (= 3 (count new-doc)) "a document with three lines")
+    (t/is (= content (nth (vals new-doc) 1)) "second line the one we added")))
+
 (t/run-tests)
