@@ -216,3 +216,36 @@
       (t/is (= document new-doc) "should alter document if pid don't exist"))))
 
 (t/run-tests)
+
+;; FUTURE API ======================================
+
+;; as the current impl is operation-based, but do not replay all operations
+;; on every new operation, the document can get into an incosistent state when
+;; dissoc operations come before its assoc operation
+;; e.g. when we user "a" added a line and deleted it, but user "b" received the
+;; delete operation before the addition operation
+
+;; (= (-> (create-doc)
+;;        (insert [[[1 1]] 0] "First line yo")
+;;        (insert [[[1 1] [1 3]] 0] "Second line yo (should be deleted)")
+;;        (delete [[[1 1] [1 3]] 0])
+;;        (insert [[[1 1] [1 2]] 0] "Second line yo (should exist)"))
+;;    (-> (create-doc)
+;;        (delete [[[1 1] [1 3]] 0])
+;;        (insert [[[1 1] [1 3]] 0] "Second line yo (should be deleted)")
+;;        (insert [[[1 1]] 0] "First line yo")
+;;        (insert [[[1 1] [1 2]] 0] "Second line yo (should exist)")))
+
+;; one way to solve this kind of issue is to make dissoc and assoc operations
+;; write to a history of operations. this can cause a bigger overhead to the
+;; document.
+
+;; possible solutions:
+;; 1) keep delete operations that can't be fulfilled because the target wasn't
+;;    added yet, reapplying it when the target shows up in the document.
+;; 2) keep a history of every action on the document, reapplying them each
+;;    time a new action comes in. this destroys the non-thombstone advantage of
+;;    logoot and can increase the document overhead exponentially.
+
+;; thanks Arnout Engelen (@raboofje) for this amazing talk that shed some light
+;; over possible solutions https://goo.gl/IhwWrP
