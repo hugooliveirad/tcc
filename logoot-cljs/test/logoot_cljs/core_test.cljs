@@ -4,6 +4,12 @@
 
 (def MAX_INT 32767)
 
+(def document
+  (-> (sut/create-doc)
+      (sut/insert [[[1 2]] 0] "First line")
+      (sut/insert [[[2 2]] 0] "Second line")
+      (sut/insert [[[3 2]] 0] "Third line")))
+
 ;; HELPER FUNCTIONS ===================================================
 
 (defn pos?
@@ -166,5 +172,17 @@
       (t/is (every? pos? samples) "pos")
       (t/is (every? (partial pos-between? [[1 2] [6 4]] [[1 6] [9 4]]) samples) "pos between")
       (t/is (every? #(= 3 (count %)) samples) "a triple"))))
+
+
+(t/deftest testing-pid->index
+  (t/is (= 1 (sut/pid->index document [[[1 2]] 0])) "correct index")
+  (t/is (= 2 (sut/pid->index document [[[2 2]] 0])) "correct index")
+  (t/is (nil? (sut/pid->index document [[[22 22]] 0])) "nil index"))
+
+
+(t/deftest testing-index->pid
+  (t/is (= [[[1 2]] 0] (sut/index->pid document 1)) "correct pid")
+  (t/is (= [[[2 2]] 0] (sut/index->pid document 2)) "correct pid")
+  (t/is (nil? (sut/index->pid document 6)) "nil pid"))
 
 (t/run-tests)
