@@ -225,7 +225,7 @@
        (map (fn [line]
                   (str "(((" (:pos line) "), " (:clock line) "), " (:content line) ")")))))
 
-(doc->logoot-str document)
+;; (doc->logoot-str document)
 
 ;; eventually these should be tests
 
