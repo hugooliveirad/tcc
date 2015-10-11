@@ -4,6 +4,22 @@
 
 (def MAX_INT 32767)
 
+;; HELPER FUNCTIONS ===================================================
+
+(defn pos?
+  "Validate if pos is a position"
+  [pos]
+  (every? #(and (integer? (first %1))
+                (integer? (second %1))) pos))
+
+(defn pos-between?
+  "Validate if pos is between pos-before and pos-after"
+  [pos-before pos-after pos]
+  (and (= 1 (sut/compare-pid [pos 0] [pos-before 0]))
+       (= -1 (sut/compare-pid [pos 0] [pos-after 0]))))
+
+;; TESTS ==============================================================
+
 (t/deftest testing-compare-pid
   (let [pid-small [[[1 1]] 0]
         pid-small-two-sites [[[1 1] [2 2]] 0]
@@ -100,8 +116,8 @@
                        (take 40)
                        (map first))
           every-sample? #(every? % samples)]
-      (t/is (every-sample? #(integer? (first %))) "line a integer")
-      (t/is (every-sample? #(integer? (second %))) "site a integer")
+      (t/is (every-sample? #(integer? (first %))) "line an integer")
+      (t/is (every-sample? #(integer? (second %))) "site an integer")
       (t/is (every-sample? #(= 1 (second %))) "site as defined")
       (t/is (every-sample? #(= 2 (count %))) "a pos couple")
       (t/is (every-sample? #(> (first %) 1)) "line greater than first line")
@@ -112,9 +128,43 @@
                        (take 40))
           samples-zip (map #(apply sut/zip %) samples)
           samples-lines (mapcat first samples-zip)
-          samples-sites (map second samples-zip)]
+          samples-sites (mapcat second samples-zip)]
 
       (t/is (every? #(> (count %) 1) samples) "a more than one couple position")
       (t/is (every? integer? samples-lines) "a position where every line is an integer"))))
+
+(t/deftest testing-gen-pos
+  (t/testing "single between"
+    (let [samples (->> (repeatedly #(sut/gen-pos 3 [[1 2]] [[10 2]]))
+                       (take 10))
+          samples-zip (map #(apply sut/zip %) samples)
+          samples-sites (mapcat second samples-zip)]
+
+      (t/is (every? pos? samples) "pos")
+      (t/is (every? (partial pos-between? [[1 2]] [[10 2]]) samples) "pos between")
+      (t/is (every? (partial = 3) samples-sites) "site the specified one")))
+
+  (t/testing "no single line between"
+    (let [samples (->> (repeatedly #(sut/gen-pos 3 [[1 2]] [[2 4]]))
+                       (take 40))]
+
+      (t/is (every? pos? samples) "pos?")
+      (t/is (every? (partial pos-between? [[1 2]] [[2 4]]) samples) "pos between")))
+
+  (t/testing "multiple lines, bigger site"
+    (let [samples (->> (repeatedly #(sut/gen-pos 7 [[1 2] [6 4]] [[1 6] [9 4]]))
+                       (take 40))]
+
+      (t/is (every? pos? samples) "pos")
+      (t/is (every? (partial pos-between? [[1 2] [6 4]] [[1 6] [9 4]]) samples) "pos between")
+      (t/is (every? #(= 2 (count %)) samples) "a couple")))
+
+  (t/testing "multiple lines, smaller site"
+    (let [samples (->> (repeatedly #(sut/gen-pos 3 [[1 2] [6 4]] [[1 6] [9 4]]))
+                       (take 40))]
+
+      (t/is (every? pos? samples) "pos")
+      (t/is (every? (partial pos-between? [[1 2] [6 4]] [[1 6] [9 4]]) samples) "pos between")
+      (t/is (every? #(= 3 (count %)) samples) "a triple"))))
 
 (t/run-tests)
