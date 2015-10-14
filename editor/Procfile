@@ -1,0 +1,1 @@
+web: java $JVM_OPTS -cp target/editor.jar clojure.main -m editor.server
