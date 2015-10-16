@@ -15,6 +15,7 @@
                  [compojure "1.3.2"]
                  [enlive "1.1.6"]
                  [org.omcljs/om "0.8.8"]
+                 [reagent "0.5.1"]
                  [environ "1.0.0"]]
 
   :plugins [[lein-cljsbuild "1.0.5"]
@@ -58,7 +59,7 @@
                                                :compiler {:output-to     "resources/public/js/app_test.js"
                                                           :output-dir    "resources/public/js/test"
                                                           :source-map    "resources/public/js/test.js.map"
-                                                          :preamble      ["react/react.min.js"]
+                                                          ;;:preamble      ["react/react.min.js"]
                                                           :optimizations :whitespace
                                                           :pretty-print  false}}}}}
 
