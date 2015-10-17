@@ -1,7 +1,6 @@
 (ns editor.core
-  (:require [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
-            [editor.logoot :as logoot]
+  (:require [editor.logoot :as logoot]
+            [editor.selection :as selection]
             [reagent.core :as r]))
 
 (enable-console-print!)
@@ -23,8 +22,13 @@
 
 (defn canvas
   [doc]
-  [:textarea {:value (->> doc vals (clojure.string/join "\n"))
-              :rows 10}])
+  (let [doc-str (->> doc vals (clojure.string/join "\n"))]
+    [:textarea {:value doc-str
+                :rows 10
+                :on-key-press
+                #(println (selection/selection-lines
+                           doc-str
+                           (-> %1 .-target (selection/selection-range))))}]))
 
 (defn on-input
   [e]
@@ -39,7 +43,7 @@
 
 (defn app
   []
-  [:div "Editor do Fabeni"
+  [:div "Editor"
    (let [doc (:doc @app-state)]
      [:div
       [canvas (-> doc rest butlast)]
