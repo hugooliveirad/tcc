@@ -25,16 +25,21 @@
   (let [doc-str (->> doc vals (clojure.string/join "\n"))]
     [:textarea {:value doc-str
                 :rows 10
+                :on-change #(nil? nil)
                 :on-key-press
-                #(println (selection/selection-lines
-                           doc-str
-                           (-> %1 .-target (selection/selection-range))))}]))
+                (fn [e]
+                  (swap! app-state #(assoc %1 :doc
+                                           (insert-after (:doc %1) (-> e
+                                                                       .-target
+                                                                       (selection/selection-range)
+                                                                       ((partial selection/selection-lines doc-str))
+                                                                       first) @clock))))}]))
 
 (defn on-input
   [e]
   (if (= 13 (.-keyCode e))
     (do (swap! app-state #(assoc %1 :doc
-                                 (insert-after (:doc %1) 0 (-> e .-target .-value))))
+                                 (insert-after (:doc %1) (-> (:doc %1) count (- 2)) (-> e .-target .-value))))
         (set! (-> e .-target .-value) ""))))
 
 (defn fake-input
