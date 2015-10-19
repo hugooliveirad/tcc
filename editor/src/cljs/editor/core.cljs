@@ -20,20 +20,35 @@
   [doc]
   [:pre (clojure.string/join "\n" (logoot/doc->logoot-str doc))])
 
+(defn selection-lines
+  [dom-node]
+  (-> dom-node
+      selection/selection-range
+      ((partial selection/selection-lines (-> dom-node .-value)))))
+
+(defn on-canvas-change
+  [e]
+  (let [target (-> e .-target)
+        cursor-line (-> (selection-lines target) first)
+        key-code (-> e .-nativeEvent .-keyCode)
+        swap-doc! (fn [f] (swap! app-state #(assoc %1 :doc (f (:doc %1)))))]
+    (do (println cursor-line)
+        (cond
+          ;; new line
+          (= 13 key-code)
+          (swap-doc! #(insert-after %1 cursor-line ""))
+
+          :else
+          (println e)))))
+
 (defn canvas
   [doc]
   (let [doc-str (->> doc vals (clojure.string/join "\n"))]
     [:textarea {:value doc-str
                 :rows 10
                 :on-change #(nil? nil)
-                :on-key-press
-                (fn [e]
-                  (swap! app-state #(assoc %1 :doc
-                                           (insert-after (:doc %1) (-> e
-                                                                       .-target
-                                                                       (selection/selection-range)
-                                                                       ((partial selection/selection-lines doc-str))
-                                                                       first) @clock))))}]))
+                :on-key-press on-canvas-change
+                }]))
 
 (defn on-input
   [e]
