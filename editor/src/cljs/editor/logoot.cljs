@@ -122,45 +122,41 @@
 (defn gen-pos
   "Generate a position between two positions"
   [site pos1 pos2]
-  (do (println "-------" "\nsite: " site " | pos1: " pos1 " | pos2: " pos2)
-      (loop [p1 (first pos1)
-             p2 (first pos2)
-             pos1-rest pos1
-             pos2-rest pos2
-             pos-acc []]
+  (loop [p1 (first pos1)
+         p2 (first pos2)
+         pos1-rest pos1
+         pos2-rest pos2
+         pos-acc []]
+    (cond
+      ;; exhausted positions looking for spaces
+      (or (empty? pos1-rest) (empty? pos2-rest))
+      (if-not (nil? p1)
+        ;; generate position between p1 line and MAX_INT
+        (into pos-acc (concat [p1] (rand-pos-bet site (first p1) MAX_INT)))
+        (if (empty? pos2-rest)
+          ;; generate position between pos-acc first line and MAX_INT
+          (into pos-acc (rand-pos-bet site (ffirst pos-acc) MAX_INT))
+          ;; generate position between pos-acc first line and last line of pos2-rest
+          (into pos-acc (concat (butlast pos2-rest) (rand-pos-bet site (ffirst pos-acc) (first (last pos2-rest)))))))
 
-        (do (println "\n--" "\np1: " p1 " | p2: " p2 "\npos1-rest: " pos1-rest " | pos2-rest: " pos2-rest "\npos-acc: " pos-acc)
+      (< (first p1) (first p2))
+      (if (>= site (second p1))
+        ;; generate position between p1 line and p2 line
+        (if (= (count pos1-rest) (count pos2-rest))
+          (into pos-acc (rand-pos-bet site (first p1) (first p2)))
+          (into pos-acc (concat (butlast pos1-rest) (rand-pos-bet site (first (last pos1-rest)) MAX_INT))))
+        ;; generate position between p1 line and MAX_INT
+        (if (= (count pos1-rest) (count pos2-rest))
+          (into pos-acc (concat [p1] (rand-pos-bet site (first p1) MAX_INT)))
+          (into pos-acc (concat (butlast pos1-rest) (rand-pos-bet site (first (last pos1-rest)) MAX_INT)))))
 
-            (cond
-              ;; exhausted positions looking for spaces
-              (or (empty? pos1-rest) (empty? pos2-rest))
-              (if-not (nil? p1)
-                ;; generate position between p1 line and MAX_INT
-                (into pos-acc (concat [p1] (rand-pos-bet site (first p1) MAX_INT)))
-                (if (empty? pos2-rest)
-                  ;; generate position between pos-acc first line and MAX_INT
-                  (into pos-acc (rand-pos-bet site (ffirst pos-acc) MAX_INT))
-                  ;; generate position between pos-acc first line and last line of pos2-rest
-                  (into pos-acc (concat (butlast pos2-rest) (rand-pos-bet site (ffirst pos-acc) (first (last pos2-rest)))))))
-
-              (< (first p1) (first p2))
-              (if (>= site (second p1))
-                ;; generate position between p1 line and p2 line
-                (if (= (count pos1-rest) (count pos2-rest))
-                  (into pos-acc (rand-pos-bet site (first p1) (first p2)))
-                  (into pos-acc (concat (butlast pos1-rest) (rand-pos-bet site (first (last pos1-rest)) MAX_INT))))
-                ;; generate position between p1 line and MAX_INT
-                (if (= (count pos1-rest) (count pos2-rest))
-                  (into pos-acc (concat [p1] (rand-pos-bet site (first p1) MAX_INT)))
-                  (into pos-acc (concat (butlast pos1-rest) (rand-pos-bet site (first (last pos1-rest)) MAX_INT)))))
-
-              :else
-              (let [pos-acc (conj pos-acc p1)
-                    pos1-rest (rest pos1-rest)
-                    pos2-rest (rest pos2-rest)
-                    p1 (first pos1-rest)
-                    p2 (first pos2-rest)]
-                (recur p1 p2 pos1-rest pos2-rest pos-acc)))))))
+      :else
+      (let [pos-acc (conj pos-acc p1)
+            pos1-rest (rest pos1-rest)
+            pos2-rest (rest pos2-rest)
+            p1 (first pos1-rest)
+            p2 (first pos2-rest)]
+        (recur p1 p2 pos1-rest pos2-rest pos-acc)))))
 
 ;; (gen-pos 3 [[1 2] [6 4]] [[1 6] [9 4]]) ;; => [[1 2] [6 4] [29728 3]]
 ;; (gen-pos 7 [[1 2] [6 4]] [[1 6] [9 4]]) ;; => [[1 2] [8 7]]
