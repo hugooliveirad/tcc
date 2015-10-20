@@ -1,9 +1,11 @@
 (ns editor.core
   (:require [editor.logoot :as logoot]
             [editor.selection :as selection]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [devtools.core :as devtools]))
 
 (enable-console-print!)
+(devtools/install!)
 
 (defonce app-state (r/atom {:doc (logoot/create-doc)}))
 (defonce clock (atom 0))

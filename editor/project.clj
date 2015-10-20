@@ -38,7 +38,8 @@
                    :dependencies [[figwheel "0.2.5"]
                                   [figwheel-sidecar "0.2.5"]
                                   [com.cemerick/piggieback "0.1.5"]
-                                  [weasel "0.6.0"]]
+                                  [weasel "0.6.0"]
+                                  [binaryage/devtools "0.3.0"]]
 
                    :repl-options {:init-ns editor.server
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
