@@ -1,7 +1,8 @@
 (ns editor.app
   (:require [editor.logoot :as logoot]
             [editor.selection :as selection]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [clojure.string :refer [split-lines]]))
 
 (defonce app-state (r/atom {:doc (logoot/create-doc)}))
 (defonce clock (atom 0))
@@ -13,6 +14,7 @@
         (logoot/insert-after doc site @clock index content))))
 
 (defonce insert-after (create-insert-after (rand-int 1000)))
+(def delete logoot/delete)
 
 (defn debugger
   [doc]
@@ -30,15 +32,20 @@
         cursor-line (-> (selection-lines target) first inc)
         key-code (-> e .-nativeEvent .-keyCode)
         swap-doc! (fn [f] (swap! app-state #(assoc %1 :doc (f (:doc %1)))))]
-    (do (println cursor-line)
-        (println (selection-lines target))
+    (do (println key-code)
         (cond
           ;; new line
           (= 13 key-code)
           (swap-doc! #(insert-after %1 cursor-line "\0"))
 
           :else
-          (println e)))))
+          (swap-doc! #(let [line-pid (logoot/index->pid %1 cursor-line)
+                            line-content (-> (.-value target)
+                                             (split-lines)
+                                             (nth (dec cursor-line)))
+                            input-char (.fromCharCode js/String key-code)]
+                        (-> (delete %1 line-pid)
+                            (insert-after (dec cursor-line) (str line-content input-char)))))))))
 
 (def canvas-styles
   {:width "100%"
