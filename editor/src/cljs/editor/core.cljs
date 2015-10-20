@@ -41,11 +41,17 @@
           :else
           (println e)))))
 
+(def canvas-styles
+  {:width "100%"
+   :max-width "300px"
+   :display "block"})
+
 (defn canvas
   [doc]
   (let [doc-str (->> doc vals (clojure.string/join "\n"))]
     [:textarea {:value doc-str
-                :rows 10
+                :rows 20
+                :style canvas-styles
                 :on-change #(nil? nil)
                 :on-key-press on-canvas-change
                 }]))
