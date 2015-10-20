@@ -1,19 +1,19 @@
 (ns editor.selection
-  (:require [clojure.string :refer [split]]))
+  (:require [clojure.string :refer [split-lines]]))
 
-(defn selection-range
+(defn range
   "Returns the selection range inside a dom-node"
   [dom-node]
   [(-> dom-node .-selectionStart)
    (-> dom-node .-selectionEnd)])
 
-(defn selection-lines
+(defn lines
   "Given a string and a selection-range, returns a seq of the lines this
-  selection spans"
+  selection spans. If the string is empty, [-1] will be returned"
   [string [range-start range-end]]
   (if (= 0 (count string))
-    [0]
-    (->> (split string #"\n")
+    [-1]
+    (->> (split-lines string)
          ;; count line sizes
          (map count)
          ;; get a tuple with the end and start sum of chars for each line

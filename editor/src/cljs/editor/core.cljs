@@ -25,20 +25,21 @@
 (defn selection-lines
   [dom-node]
   (-> dom-node
-      selection/selection-range
-      ((partial selection/selection-lines (-> dom-node .-value)))))
+      selection/range
+      ((partial selection/lines (-> dom-node .-value)))))
 
 (defn on-canvas-change
   [e]
   (let [target (-> e .-target)
-        cursor-line (-> (selection-lines target) first)
+        cursor-line (-> (selection-lines target) first inc)
         key-code (-> e .-nativeEvent .-keyCode)
         swap-doc! (fn [f] (swap! app-state #(assoc %1 :doc (f (:doc %1)))))]
     (do (println cursor-line)
+        (println (selection-lines target))
         (cond
           ;; new line
           (= 13 key-code)
-          (swap-doc! #(insert-after %1 cursor-line ""))
+          (swap-doc! #(insert-after %1 cursor-line "\0"))
 
           :else
           (println e)))))
