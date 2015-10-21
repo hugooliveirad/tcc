@@ -9,7 +9,7 @@
                      (r/atom {:site site
                               :clock 0
                               :doc (-> (logoot/create-doc)
-                                       (logoot/insert-after site clock 0 "\0"))})))
+                                       (logoot/insert-after site clock 0 "\b"))})))
 
 (defn create-insert-after
   [site]
@@ -40,7 +40,7 @@
         (cond
           ;; new line
           (= 13 key-code)
-          (swap-doc! #(insert-after %1 cursor-line "\0"))
+          (swap-doc! #(insert-after %1 cursor-line "\b"))
 
           :else
           (swap-doc! #(let [line-pid (logoot/index->pid %1 cursor-line)
