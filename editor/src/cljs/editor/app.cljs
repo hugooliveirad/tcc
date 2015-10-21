@@ -4,16 +4,20 @@
             [reagent.core :as r]
             [clojure.string :refer [split-lines]]))
 
-(defonce app-state (r/atom {:doc (logoot/create-doc)}))
-(defonce clock (atom 0))
+(defonce app-state (let [site (rand-int 1000)
+                         clock 0]
+                     (r/atom {:site site
+                              :clock 0
+                              :doc (-> (logoot/create-doc)
+                                       (logoot/insert-after site clock 0 "\0"))})))
 
 (defn create-insert-after
   [site]
   (fn [doc index content]
-    (do (swap! clock inc)
-        (logoot/insert-after doc site @clock index content))))
+    (do (swap! app-state #(assoc %1 :clock (inc (:clock %1))))
+        (logoot/insert-after doc site (:clock @app-state) index content))))
 
-(defonce insert-after (create-insert-after (rand-int 1000)))
+(def insert-after (create-insert-after (:site @app-state)))
 (def delete logoot/delete)
 
 (defn debugger
