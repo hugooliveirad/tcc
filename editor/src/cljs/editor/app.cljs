@@ -57,9 +57,9 @@
     (let [target (-> e .-target)
           cursor-line (-> (selection-lines target) first inc)
           key-code (-> e .-keyCode)]
-      (cond
-        (= (:backspace special-keys) key-code)
-        (swap-doc! #(edit-line %1 cursor-line (fn [line-content]
+      (swap-doc! (cond
+                   (= (:backspace special-keys) key-code)
+                   #(edit-line %1 cursor-line (fn [line-content]
                                                 (-> (butlast line-content)
                                                     (->> (clojure.string/join ""))))))))))
 
@@ -68,16 +68,16 @@
   (let [target (-> e .-target)
         cursor-line (-> (selection-lines target) first inc)
         key-code (-> e .-nativeEvent .-keyCode)]
-    (cond
-      ;; new line
-      (= 13 key-code)
-      (swap-doc! #(insert-after %1 cursor-line "\b"))
+    (swap-doc!  (cond
+                  ;; new line
+                  (= 13 key-code)
+                  #(insert-after %1 cursor-line "\b")
 
-      ;; any other key
-      :else
-      (swap-doc! #(let [input-char (.fromCharCode js/String key-code)]
-                    (edit-line %1 cursor-line (fn [line-content]
-                                                (str line-content input-char))))))))
+                  ;; any other key
+                  :else
+                  #(let [input-char (.fromCharCode js/String key-code)]
+                                (edit-line %1 cursor-line (fn [line-content]
+                                                            (str line-content input-char))))))))
 
 (def canvas-styles
   {:width "100%"
