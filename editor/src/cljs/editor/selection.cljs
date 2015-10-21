@@ -1,13 +1,13 @@
 (ns editor.selection
   (:require [clojure.string :refer [split-lines]]))
 
-(defn range
+(defn sel-range
   "Returns the selection range inside a dom-node"
   [dom-node]
   [(-> dom-node .-selectionStart)
    (-> dom-node .-selectionEnd)])
 
-(defn lines
+(defn sel-lines
   "Given a string and a selection-range, returns a seq of the lines this
   selection spans. If the string is empty, [-1] will be returned"
   [string [range-start range-end]]

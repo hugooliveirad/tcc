@@ -27,8 +27,8 @@
 (defn selection-lines
   [dom-node]
   (-> dom-node
-      selection/range
-      ((partial selection/lines (-> dom-node .-value)))))
+      selection/sel-range
+      ((partial selection/sel-lines (-> dom-node .-value)))))
 
 (defn on-canvas-change
   [e]
