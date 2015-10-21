@@ -237,6 +237,7 @@
 
        ;; merge position strings and more infos into logoot-str
        (map (fn [line]
-                  (str "(((" (:pos line) "), " (:clock line) "), " (:content line) ")")))))
+              (str "(((" (:pos line) "), " (:clock line) "), " (:content line) ")")))
+       (clojure.string/join "\n")))
 
 ;; (doc->logoot-str document)

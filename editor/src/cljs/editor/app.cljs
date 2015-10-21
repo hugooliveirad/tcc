@@ -18,7 +18,7 @@
 
 (defn debugger
   [doc]
-  [:pre (clojure.string/join "\n" (logoot/doc->logoot-str doc))])
+  [:pre (logoot/doc->logoot-str doc)])
 
 (defn selection-lines
   [dom-node]
