@@ -20,6 +20,10 @@
 (def insert-after (create-insert-after (:site @app-state)))
 (def delete logoot/delete)
 
+(defn swap-doc!
+  [f]
+  (swap! app-state #(assoc %1 :doc (f (:doc %1)))))
+
 (defn debugger
   [doc]
   [:pre (logoot/doc->logoot-str doc)])
@@ -30,26 +34,50 @@
       selection/sel-range
       ((partial selection/sel-lines (-> dom-node .-value)))))
 
-(defn on-canvas-change
+(def special-keys {:backspace 8})
+
+(defn special-key?
+  "Returns if a key is a special key"
+  [key]
+  ((complement nil?) ((set (vals special-keys)) key)))
+
+(defn edit-line
+  "Given a doc, change the content of a line based on the function applied
+  to the current value of the line"
+  [doc line f]
+  (let [line-pid (logoot/index->pid doc line)
+        line-content (-> (vals doc)
+                         (nth line))]
+    (-> (delete doc line-pid)
+        (insert-after (dec line) (f line-content)))))
+
+(defn on-canvas-key-down
+  [e]
+  (if (special-key? (.-keyCode e))
+    (let [target (-> e .-target)
+          cursor-line (-> (selection-lines target) first inc)
+          key-code (-> e .-keyCode)]
+      (cond
+        (= (:backspace special-keys) key-code)
+        (swap-doc! #(edit-line %1 cursor-line (fn [line-content]
+                                                (-> (butlast line-content)
+                                                    (->> (clojure.string/join ""))))))))))
+
+(defn on-canvas-key-press
   [e]
   (let [target (-> e .-target)
         cursor-line (-> (selection-lines target) first inc)
-        key-code (-> e .-nativeEvent .-keyCode)
-        swap-doc! (fn [f] (swap! app-state #(assoc %1 :doc (f (:doc %1)))))]
-    (do (println key-code)
-        (cond
-          ;; new line
-          (= 13 key-code)
-          (swap-doc! #(insert-after %1 cursor-line "\b"))
+        key-code (-> e .-nativeEvent .-keyCode)]
+    (cond
+      ;; new line
+      (= 13 key-code)
+      (swap-doc! #(insert-after %1 cursor-line "\b"))
 
-          :else
-          (swap-doc! #(let [line-pid (logoot/index->pid %1 cursor-line)
-                            line-content (-> (.-value target)
-                                             (split-lines)
-                                             (nth (dec cursor-line)))
-                            input-char (.fromCharCode js/String key-code)]
-                        (-> (delete %1 line-pid)
-                            (insert-after (dec cursor-line) (str line-content input-char)))))))))
+      ;; any other key
+      :else
+      (swap-doc! #(let [input-char (.fromCharCode js/String key-code)]
+                    (edit-line %1 cursor-line (fn [line-content]
+                                                (str line-content input-char))))))))
 
 (def canvas-styles
   {:width "100%"
@@ -63,7 +91,8 @@
                 :rows 20
                 :style canvas-styles
                 :on-change #(nil? nil)
-                :on-key-press on-canvas-change
+                :on-key-down on-canvas-key-down
+                :on-key-press on-canvas-key-press
                 }]))
 
 (defn on-input
