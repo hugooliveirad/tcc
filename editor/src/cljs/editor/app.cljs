@@ -4,6 +4,8 @@
             [reagent.core :as r]
             [clojure.string :refer [split-lines]]))
 
+;;;; App State
+
 (defonce app-state (let [site (rand-int 1000)
                          clock 0]
                      (r/atom {:site site
@@ -11,28 +13,24 @@
                               :doc (-> (logoot/create-doc)
                                        (logoot/insert-after site clock 0 "\b"))})))
 
+;;;; Helper functions
+
 (defn create-insert-after
   [site]
   (fn [doc index content]
     (do (swap! app-state #(assoc %1 :clock (inc (:clock %1))))
         (logoot/insert-after doc site (:clock @app-state) index content))))
 
-(def insert-after (create-insert-after (:site @app-state)))
-(def delete logoot/delete)
-
-(defn swap-doc!
-  [f]
-  (swap! app-state #(assoc %1 :doc (f (:doc %1)))))
-
-(defn debugger
-  [doc]
-  [:pre (logoot/doc->logoot-str doc)])
-
 (defn selection-lines
+  "Given a dom-node, returns the selection lines"
   [dom-node]
   (-> dom-node
       selection/sel-range
       ((partial selection/sel-lines (-> dom-node .-value)))))
+
+(defn swap-doc!
+  [f]
+  (swap! app-state #(assoc %1 :doc (f (:doc %1)))))
 
 (def special-keys {:backspace 8})
 
@@ -40,6 +38,12 @@
   "Returns if a key is a special key"
   [key]
   ((complement nil?) ((set (vals special-keys)) key)))
+
+;;;; Action functions
+
+(def insert-after (create-insert-after (:site @app-state)))
+
+(def delete logoot/delete)
 
 (defn edit-line
   "Given a doc, change the content of a line based on the function applied
@@ -50,6 +54,13 @@
                          (nth line))]
     (-> (delete doc line-pid)
         (insert-after (dec line) (f line-content)))))
+
+;;;; Components (and event handlers)
+
+(defn debugger
+  [doc]
+  [:pre (logoot/doc->logoot-str doc)])
+
 
 (defn on-canvas-key-down
   [e]
