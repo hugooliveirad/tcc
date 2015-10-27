@@ -13,6 +13,12 @@
                               :doc (-> (logoot/create-doc)
                                        (logoot/insert-after site clock 0 "\b"))})))
 
+(add-watch app-state :watcher
+           (fn [key a old-state new-state]
+             (println "-- App State Change --")
+             (println "app-state" new-state)
+             (println "--")))
+
 ;;;; Helper functions
 
 (defn create-insert-after
