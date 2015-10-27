@@ -55,6 +55,13 @@
     (-> (delete doc line-pid)
         (insert-after (dec line) (f line-content)))))
 
+(defn get-key-code
+  "Given an event, return the key-code. This normalizes browser behaviors."
+  [evt]
+  (if (not= 0 (.-keyCode evt))
+    (.-keyCode evt)
+    (.-charCode evt)))
+
 ;;;; Components (and event handlers)
 
 (defn debugger
@@ -64,10 +71,10 @@
 
 (defn on-canvas-key-down
   [e]
-  (if (special-key? (.-keyCode e))
+  (if (special-key? (get-key-code e))
     (let [target (-> e .-target)
           cursor-line (-> (selection-lines target) first inc)
-          key-code (-> e .-keyCode)]
+          key-code (get-key-code e)]
       (swap-doc! (cond
                    (= (:backspace special-keys) key-code)
                    #(edit-line %1 cursor-line (fn [line-content]
@@ -78,7 +85,7 @@
   [e]
   (let [target (-> e .-target)
         cursor-line (-> (selection-lines target) first inc)
-        key-code (-> e .-nativeEvent .-keyCode)]
+        key-code (-> e .-nativeEvent get-key-code)]
     (swap-doc!  (cond
                   ;; new line
                   (= 13 key-code)
