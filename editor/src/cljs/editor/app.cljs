@@ -21,12 +21,6 @@
 
 ;;;; Helper functions
 
-(defn create-insert-after
-  [site]
-  (fn [doc index content]
-    (do (swap! app-state #(assoc %1 :clock (inc (:clock %1))))
-        (logoot/insert-after doc site (:clock @app-state) index content))))
-
 (defn selection-lines
   "Given a dom-node, returns the selection lines"
   [dom-node]
@@ -36,7 +30,8 @@
 
 (defn swap-doc!
   [f]
-  (swap! app-state #(assoc %1 :doc (f (:doc %1)))))
+  (swap! app-state #(assoc-in %1 [:clock] (-> %1 :clock inc)))
+  (swap! app-state #(assoc-in %1 [:doc] (-> %1 :doc f))))
 
 (def special-keys {:backspace 8})
 
@@ -44,6 +39,11 @@
   "Returns if a key is a special key"
   [key]
   ((complement nil?) ((set (vals special-keys)) key)))
+
+(defn create-insert-after
+  [site]
+  (fn [doc index content]
+    (logoot/insert-after doc site (:clock @app-state) index content)))
 
 ;;;; Action functions
 
