@@ -62,6 +62,17 @@
     (.-keyCode evt)
     (.-charCode evt)))
 
+(defn remove-char
+  "Given a direction, cursor-range and a content, return a new string with
+  the removal applied"
+  [direction cursor-range content]
+  (condp = direction
+    :backward
+    (-> (butlast content)
+        (->> (clojure.string/join "")))
+    :forward
+    content))
+
 ;;;; Components (and event handlers)
 
 (defn debugger
@@ -69,17 +80,22 @@
   [:pre (logoot/doc->logoot-str doc)])
 
 
+;; Probably the best way to handle this would be to implement a document editor
+;; component, which would export CSP channels for changes. It would likely
+;; export events like "line removed", "backspace", "delete", "char inserted"
+;; TODO: implement document editor as a more reusable component
 (defn on-canvas-key-down
   [e]
   (if (special-key? (get-key-code e))
     (let [target (-> e .-target)
+          ;; TODO: handle selections that spans multiple lines
+          cursor-range (selection/sel-range target)
           cursor-line (-> (selection-lines target) first inc)
           key-code (get-key-code e)]
       (swap-doc! (cond
                    (= (:backspace special-keys) key-code)
-                   #(edit-line %1 cursor-line (fn [line-content]
-                                                (-> (butlast line-content)
-                                                    (->> (clojure.string/join ""))))))))))
+                   ;; TODO: handle multiple line deletions
+                   #(edit-line %1 cursor-line (partial remove-char :backward cursor-range)))))))
 
 (defn on-canvas-key-press
   [e]
