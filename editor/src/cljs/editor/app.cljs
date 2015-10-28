@@ -129,25 +129,13 @@
                 :on-key-press on-canvas-key-press
                 }]))
 
-(defn on-input
-  [e]
-  (if (= 13 (.-keyCode e))
-    (do (swap! app-state #(assoc %1 :doc
-                                 (insert-after (:doc %1) (-> (:doc %1) count (- 2)) (-> e .-target .-value))))
-        (set! (-> e .-target .-value) ""))))
-
-(defn fake-input
-  []
-  [:input {:on-key-down on-input}])
-
 (defn app
   []
   [:div "Editor"
    (let [doc (:doc @app-state)]
      [:div
       [canvas (-> doc rest butlast)]
-      [debugger doc]
-      [fake-input]])])
+      [debugger doc]])])
 
 (defn main
   []
