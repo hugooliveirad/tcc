@@ -1,0 +1,37 @@
+Figwheel: focusing on build-ids (dev)
+[0mCompiling "resources/public/js/main.js" from ["src"]...
+Compiling target/figwheel_temp/dev/figwheel/connect.cljs
+[32mSuccessfully compiled "resources/public/js/main.js" in 0.262 seconds.[0m
+notifying browser that file changed:  resources/public/js/goog/deps.js
+notifying browser that file changed:  resources/public/js/cljs_deps.js
+notifying browser that file changed:  /editor/selection.js
+notifying browser that file changed:  /editor/logoot.js
+notifying browser that file changed:  /editor/core.js
+notifying browser that file changed:  /editor/app.js
+[0mCompiling "resources/public/js/main.js" from ["src"]...
+Compiling src/editor/core.cljs
+Reading analysis cache for file:/Users/hugo.oliveira/dev/tcc/editor/src/editor/app.cljs
+WARNING: Use of undeclared Var editor.app/main at line 15 src/editor/core.cljs
+[32mSuccessfully compiled "resources/public/js/main.js" in 0.283 seconds.[0m
+notifying browser that file changed:  /editor/core.js
+[0mCompiling "resources/public/js/main.js" from ["src"]...
+Compiling src/editor/core.cljs
+Reading analysis cache for file:/Users/hugo.oliveira/dev/tcc/editor/src/editor/app.cljs
+[32mSuccessfully compiled "resources/public/js/main.js" in 0.146 seconds.[0m
+notifying browser that file changed:  /editor/core.js
+[0mCompiling "resources/public/js/main.js" from ["src"]...
+Compiling src/editor/core.cljs
+Reading analysis cache for file:/Users/hugo.oliveira/dev/tcc/editor/src/editor/app.cljs
+[32mSuccessfully compiled "resources/public/js/main.js" in 0.144 seconds.[0m
+notifying browser that file changed:  /editor/core.js
+[0mCompiling "resources/public/js/main.js" from ["src"]...
+Compiling src/editor/core.cljs
+Reading analysis cache for file:/Users/hugo.oliveira/dev/tcc/editor/src/editor/app.cljs
+WARNING: Use of undeclared Var editor.core/prinln at line 14 src/editor/core.cljs
+[32mSuccessfully compiled "resources/public/js/main.js" in 0.227 seconds.[0m
+notifying browser that file changed:  /editor/core.js
+[0mCompiling "resources/public/js/main.js" from ["src"]...
+Compiling src/editor/core.cljs
+Reading analysis cache for file:/Users/hugo.oliveira/dev/tcc/editor/src/editor/app.cljs
+[32mSuccessfully compiled "resources/public/js/main.js" in 0.138 seconds.[0m
+notifying browser that file changed:  /editor/core.js

@@ -1,10 +1,24 @@
 (ns editor.app
   (:require [editor.logoot :as logoot]
             [editor.selection :as selection]
-            [reagent.core :as r]
+            #_[reagent.core :as r]
+            [goog.dom :as gdom]
+            [om.next :as om :refer-macros [defui]]
+            [om.dom :as dom]
             [clojure.string :refer [split-lines]]))
 
+
+(defui Hello
+  Object
+  (render [this]
+          (dom/div nil "Hello world")))
+
+(def hello (om/factory Hello))
+
+(js/ReactDOM.render (hello) (gdom/getElement "app"))
+
 ;;;; App State
+(comment
 
 (defonce app-state (let [site (rand-int 1000)
                          clock 0]
@@ -141,3 +155,4 @@
   []
   (r/render-component [app]
                       (. js/document (getElementById "app"))))
+)
