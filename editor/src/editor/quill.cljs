@@ -3,7 +3,7 @@
             [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]))
 
-(defui QuillEditor
+(defui Editor
   Object
   (componentDidMount [this]
                      (let [props (om/props this)

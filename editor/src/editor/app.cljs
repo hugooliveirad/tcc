@@ -56,7 +56,7 @@
   [{:keys [doc] :as props}]
   (dom/pre nil (-> doc logoot/doc->logoot-str)))
 
-(def editor (om/factory quill/QuillEditor))
+(def editor (om/factory quill/Editor))
 
 (defui App
   static om/IQuery
