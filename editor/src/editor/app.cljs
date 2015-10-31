@@ -5,7 +5,7 @@
             [goog.dom :as gdom]
             [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]
-            [clojure.string :refer [split-lines]]))
+            [clojure.string :refer [split-lines join]]))
 
 (enable-console-print!)
 
@@ -16,7 +16,10 @@
                      (atom {:site site
                             :clock 0
                             :doc (-> (logoot/create-doc)
-                                     (logoot/insert-after site clock 0 "\b"))})))
+                                     (logoot/insert-after site
+                                                          clock
+                                                          0
+                                                          "\bLogoot document"))})))
 
 ;;;; Parser ;;;;
 
@@ -54,7 +57,7 @@
 
 (defn debugger
   [{:keys [doc] :as props}]
-  (dom/pre nil (-> doc logoot/doc->logoot-str)))
+  (dom/pre nil (->> doc logoot/doc->logoot-str)))
 
 (def editor (om/factory quill/Editor))
 
@@ -64,9 +67,15 @@
          [:doc])
   Object
   (render [this]
-          (dom/div nil
-                   (editor {:on-text-change #(println % %)})
-                   (debugger {:doc (-> this om/props :doc)}))))
+          (let [doc (-> this om/props :doc)]
+            (dom/div nil
+                     (editor {:content (->> doc
+                                            vals
+                                            rest
+                                            butlast
+                                            (join "\n"))
+                              :on-text-change #(println % %)})
+                     (debugger {:doc (-> this om/props :doc)})))))
 
 ;;;; Root ;;;;
 
