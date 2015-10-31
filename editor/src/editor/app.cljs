@@ -1,11 +1,11 @@
 (ns editor.app
   (:require [editor.logoot :as logoot]
             [editor.selection :as selection]
+            [editor.quill :as quill]
             [goog.dom :as gdom]
             [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]
-            [clojure.string :refer [split-lines]]
-            [cljsjs.quill]))
+            [clojure.string :refer [split-lines]]))
 
 (enable-console-print!)
 
@@ -56,17 +56,7 @@
   [{:keys [doc] :as props}]
   (dom/pre nil (-> doc logoot/doc->logoot-str)))
 
-(defui QuillEditor
-  Object
-  (componentDidMount [_]
-                     (let [editor (js/Quill. "#editor")]
-                       (.on editor "text-change" #(apply-delta!
-                                                   {:ops (js->clj (.-ops %) :keywordize-keys true)}
-                                                   %))))
-  (render [_]
-          (dom/div #js {:id "editor"} nil)))
-
-(def editor (om/factory QuillEditor))
+(def editor (om/factory quill/QuillEditor))
 
 (defui App
   static om/IQuery
@@ -75,7 +65,7 @@
   Object
   (render [this]
           (dom/div nil
-                   (editor)
+                   (editor {:on-text-change #(println % %)})
                    (debugger {:doc (-> this om/props :doc)}))))
 
 ;;;; Root ;;;;
