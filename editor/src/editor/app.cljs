@@ -1,31 +1,81 @@
 (ns editor.app
   (:require [editor.logoot :as logoot]
             [editor.selection :as selection]
-            #_[reagent.core :as r]
             [goog.dom :as gdom]
             [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]
             [clojure.string :refer [split-lines]]))
 
+(enable-console-print!)
 
-(defui Hello
+;;;; App State ;;;;
+
+(def app-state (let [site (rand-int 1000)
+                         clock 0]
+                     (atom {:site site
+                            :clock 0
+                            :doc (-> (logoot/create-doc)
+                                     (logoot/insert-after site clock 0 "\b"))})))
+
+;;;; Parser ;;;;
+
+(defn read
+  [{:keys [state] :as env} key params]
+  (let [st @state]
+    (if-let [[_ v] (find st key)]
+      {:value v}
+      {:value :not-found})))
+
+(defn mutate
+  [{:keys [state] :as env} key params]
+  (if (= 'increment key)
+    {:value [:count]
+     :action #(swap! state update-in [:count] inc)}
+    {:value :not-found}))
+
+(def app-parser (om/parser {:read read :mutate mutate}))
+
+;;;; Reconciler ;;;;
+
+(def reconciler
+  (om/reconciler
+   {:state app-state
+    :parser app-parser}))
+
+;;;; App Components ;;;;
+
+(defui App
+  static om/IQuery
+  (query [this]
+         [:doc])
   Object
   (render [this]
-          (dom/div nil "Hello world")))
+          (dom/pre nil
+                   (logoot/doc->logoot-str (-> this om/props :doc)))))
 
-(def hello (om/factory Hello))
+;;;; Root ;;;;
 
-(js/ReactDOM.render (hello) (gdom/getElement "app"))
+(om/add-root! reconciler
+              App (gdom/getElement "app"))
 
-;;;; App State
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (comment
 
-(defonce app-state (let [site (rand-int 1000)
-                         clock 0]
-                     (r/atom {:site site
-                              :clock 0
-                              :doc (-> (logoot/create-doc)
-                                       (logoot/insert-after site clock 0 "\b"))})))
+
 
 ;;;; Helper functions
 
