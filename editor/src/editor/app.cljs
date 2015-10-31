@@ -4,7 +4,8 @@
             [goog.dom :as gdom]
             [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]
-            [clojure.string :refer [split-lines]]))
+            [clojure.string :refer [split-lines]]
+            [cljsjs.quill]))
 
 (enable-console-print!)
 
@@ -26,12 +27,12 @@
       {:value v}
       {:value :not-found})))
 
-(defn mutate
-  [{:keys [state] :as env} key params]
-  (if (= 'increment key)
-    {:value [:count]
-     :action #(swap! state update-in [:count] inc)}
-    {:value :not-found}))
+(defmulti mutate om/dispatch)
+
+(defmethod mutate 'editor.app/apply-delta
+  [{:keys [state]} _ {:keys [delta]}]
+  {:value [:doc]
+   :action #(swap! state update-in [:doc] (fn [doc] doc))})
 
 (def app-parser (om/parser {:read read :mutate mutate}))
 
@@ -42,7 +43,30 @@
    {:state app-state
     :parser app-parser}))
 
+;;;; App Transactions ;;;;
+
+(defn apply-delta!
+  "Apply a given delta to the state document"
+  [delta source]
+  (om/transact! reconciler `[(apply-delta ~{:delta delta :source source})]))
+
 ;;;; App Components ;;;;
+
+(defn debugger
+  [{:keys [doc] :as props}]
+  (dom/pre nil (-> doc logoot/doc->logoot-str)))
+
+(defui QuillEditor
+  Object
+  (componentDidMount [_]
+                     (let [editor (js/Quill. "#editor")]
+                       (.on editor "text-change" #(apply-delta!
+                                                   {:ops (js->clj (.-ops %) :keywordize-keys true)}
+                                                   %))))
+  (render [_]
+          (dom/div #js {:id "editor"} nil)))
+
+(def editor (om/factory QuillEditor))
 
 (defui App
   static om/IQuery
@@ -50,8 +74,9 @@
          [:doc])
   Object
   (render [this]
-          (dom/pre nil
-                   (logoot/doc->logoot-str (-> this om/props :doc)))))
+          (dom/div nil
+                   (editor)
+                   (debugger {:doc (-> this om/props :doc)}))))
 
 ;;;; Root ;;;;
 
