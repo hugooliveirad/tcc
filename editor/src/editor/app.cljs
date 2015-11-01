@@ -54,6 +54,11 @@
         end (subs s cursor)]
     (str start content end)))
 
+(defn delete-at
+  "Deletes length character from content of s[tring] after cursor"
+  [s cursor length]
+  (str (subs s 0 cursor) (subs s (+ cursor length))))
+
 (defn apply-delta
   "Apply Quill delta into a logoot-doc"
   [doc delta]
@@ -84,10 +89,17 @@
           (< retain doc-line-chars)
           (recur dc (rest ops) line retain)))
 
+      ;; TODO: make insert and delete work between multiple lines
+
       (= :insert (-> ops first keys first))
       (let [insert (-> ops first :insert)
             new-doc (edit-line dc line #(insert-at %1 cursor insert))]
-        (recur new-doc (rest ops) line (+ cursor (count insert)))))))
+        (recur new-doc (rest ops) line (+ cursor (count insert))))
+
+      (= :delete (-> ops first keys first))
+      (let [length (-> ops first :delete)
+            new-doc (edit-line dc line #(delete-at %1 cursor length))]
+        (recur new-doc (rest ops) line (+ cursor length))))))
 
 ;;;; Parser ;;;;
 
