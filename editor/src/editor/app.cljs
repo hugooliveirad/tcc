@@ -33,9 +33,12 @@
 (defmulti mutate om/dispatch)
 
 (defmethod mutate 'editor.app/apply-delta
-  [{:keys [state]} _ {:keys [delta]}]
-  {:value [:doc]
-   :action #(swap! state update-in [:doc] (fn [doc] doc))})
+  [{:keys [state]} _ {:keys [delta source]}]
+  (.log js/console source)
+  (when (= source "user")
+    {:value [:doc]
+     :action #(swap! state update-in [:doc] (fn [doc]
+                                              (logoot/insert-after doc 5 1 1 "gold")))}))
 
 (def app-parser (om/parser {:read read :mutate mutate}))
 
@@ -74,7 +77,7 @@
                                             rest
                                             butlast
                                             (join "\n"))
-                              :on-text-change #(println % %)})
+                              :on-text-change #(apply-delta! (js->clj %1) %2)})
                      (debugger {:doc (-> this om/props :doc)})))))
 
 ;;;; Root ;;;;
