@@ -17,8 +17,10 @@
   (componentWillReceiveProps [this next]
                              (when (not= (-> this om/props :content)
                                          (-> next :content))
-                               (.setText (om/get-state this :editor)
-                                         (:content next))))
+                               (let [editor (om/get-state this :editor)
+                                     selection (.getSelection editor)]
+                                 (.setText editor (:content next))
+                                 (.setSelection editor selection))))
   (render [_]
           (dom/div #js {:id "editor"} nil)))
 
