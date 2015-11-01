@@ -12,14 +12,82 @@
 ;;;; App State ;;;;
 
 (def app-state (let [site (rand-int 1000)
-                         clock 0]
-                     (atom {:site site
-                            :clock 0
-                            :doc (-> (logoot/create-doc)
-                                     (logoot/insert-after site
-                                                          clock
-                                                          0
-                                                          "\bLogoot document"))})))
+                     clock 0]
+                 (atom {:site site
+                        :clock 0
+                        :doc (-> (logoot/create-doc)
+                                 (logoot/insert-after site
+                                                      clock
+                                                      0
+                                                      "\bLogoot document yo")
+                                 (logoot/insert-after site
+                                                      clock
+                                                      0
+                                                      "\bLogoot document"))})))
+
+;;;; App Helpers ;;;;
+
+(defn create-insert-after
+  [site]
+  (fn [doc index content]
+    (logoot/insert-after doc site (:clock @app-state) index content)))
+
+(def insert-after (create-insert-after (:site @app-state)))
+(def delete logoot/delete)
+
+;;;; App Mutation Helpers ;;;;
+
+(defn edit-line
+  "Given a doc, change the content of a line based on the function applied
+  to the current value of the line"
+  [doc line f]
+  (let [line-pid (logoot/index->pid doc line)
+        line-content (-> (vals doc)
+                         (nth line))]
+    (-> (delete doc line-pid)
+        (insert-after (dec line) (f line-content)))))
+
+(defn insert-at
+  "Insert content inside a s[tring] into the cursor position"
+  [s cursor content]
+  (let [start (subs s 0 cursor)
+        end (subs s cursor)]
+    (str start content end)))
+
+(defn apply-delta
+  "Apply Quill delta into a logoot-doc"
+  [doc delta]
+  (println "delta" delta)
+  (loop [dc doc
+         ops (:ops delta)
+         line 1
+         cursor 0]
+    (println "looping" dc ops line cursor)
+    (cond
+      (empty? ops)
+      dc
+
+      (= :retain (-> ops first keys first))
+      (let [retain (-> ops first :retain)
+            doc-line (-> dc vals (nth line))
+            doc-line-chars (-> doc-line count inc)]
+        (cond
+          ;; retain the entire line, but just it
+          (= retain doc-line-chars)
+          (recur dc (rest ops) (inc line) 0)
+
+          ;; retain the entire line, and more
+          (> retain doc-line-chars)
+          (recur dc (update-in ops [0 :retain] #(- % doc-line-chars)) (inc line) 0)
+
+          ;; retain part of the line
+          (< retain doc-line-chars)
+          (recur dc (rest ops) line retain)))
+
+      (= :insert (-> ops first keys first))
+      (let [insert (-> ops first :insert)
+            new-doc (edit-line dc line #(insert-at %1 cursor insert))]
+        (recur new-doc (rest ops) line (+ cursor (count insert)))))))
 
 ;;;; Parser ;;;;
 
@@ -37,8 +105,7 @@
   (.log js/console source)
   (when (= source "user")
     {:value [:doc]
-     :action #(swap! state update-in [:doc] (fn [doc]
-                                              (logoot/insert-after doc 5 1 1 "gold")))}))
+     :action #(swap! state update-in [:doc] (fn [doc] (apply-delta doc delta)))}))
 
 (def app-parser (om/parser {:read read :mutate mutate}))
 
@@ -72,12 +139,14 @@
   (render [this]
           (let [doc (-> this om/props :doc)]
             (dom/div nil
-                     (editor {:content (->> doc
-                                            vals
-                                            rest
-                                            butlast
-                                            (join "\n"))
-                              :on-text-change #(apply-delta! (js->clj %1) %2)})
+                     (editor {:content
+                              (->> doc
+                                   vals
+                                   rest
+                                   butlast
+                                   (join "\n"))
+                              :on-text-change
+                              #(apply-delta! {:ops (js->clj (aget %1 "ops") :keywordize-keys true)} %2)})
                      (debugger {:doc (-> this om/props :doc)})))))
 
 ;;;; Root ;;;;
@@ -125,26 +194,10 @@
   [key]
   ((complement nil?) ((set (vals special-keys)) key)))
 
-(defn create-insert-after
-  [site]
-  (fn [doc index content]
-    (logoot/insert-after doc site (:clock @app-state) index content)))
 
 ;;;; Action functions
 
-(def insert-after (create-insert-after (:site @app-state)))
 
-(def delete logoot/delete)
-
-(defn edit-line
-  "Given a doc, change the content of a line based on the function applied
-  to the current value of the line"
-  [doc line f]
-  (let [line-pid (logoot/index->pid doc line)
-        line-content (-> (vals doc)
-                         (nth line))]
-    (-> (delete doc line-pid)
-        (insert-after (dec line) (f line-content)))))
 
 (defn get-key-code
   "Given an event, return the key-code. This normalizes browser behaviors."
