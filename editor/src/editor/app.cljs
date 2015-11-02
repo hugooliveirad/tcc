@@ -43,6 +43,18 @@
   (-> (vals doc)
       (nth line)))
 
+(defn split-lines-with-empty
+  "Split lines, but also split empty lines"
+  [s]
+  (->> (map identity s)
+       (map #(if (= %1 "\n") " \n " %1))
+       clojure.string/join
+       clojure.string/split-lines
+       (map clojure.string/trim)
+       (#(if (= "" (last %1))
+           (butlast %1)
+           %1))))
+
 (defn edit-line
   "Given a doc, change the content of a line based on the function applied
   to the current value of the line"
@@ -51,6 +63,17 @@
         line-content (line-content doc line)]
     (-> (delete doc line-pid)
         (insert-after (dec line) (f line-content)))))
+
+(defn insert-lines-at
+  "Insert lines in a given document in after the given line index"
+  [doc index lines]
+  (-> (reduce (fn [[doc index] insert]
+                [(insert-after doc (dec index) insert)
+                 (inc index)])
+              [doc
+               (inc index)]
+              lines)
+      first))
 
 (defn insert-at
   "Insert content inside a s[tring] into the cursor position"
@@ -98,9 +121,15 @@
       ;; TODO: make insert and delete work between multiple lines
 
       (= :insert (-> ops first keys first))
-      (let [insert (-> ops first :insert)
-            new-doc (edit-line dc line #(insert-at %1 cursor insert))]
-        (recur new-doc (rest ops) line (+ cursor (count insert))))
+      (let [inserts (-> ops first :insert split-lines-with-empty)
+            [new-doc line] (let [new-doc (if (= "" (first inserts))
+                                           (insert-after dc line "")
+                                           (edit-line dc line #(insert-at %1 cursor (first inserts))))]
+                             (if-not (= 0 (count (rest inserts)))
+                               [(insert-lines-at new-doc line (rest inserts))
+                                (+ line (count (rest inserts)))]
+                               [new-doc line]))]
+        (recur new-doc (rest ops) line 0))
 
       (= :delete (-> ops first keys first))
       (let [length (-> ops first :delete)
