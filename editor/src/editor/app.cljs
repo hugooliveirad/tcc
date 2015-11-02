@@ -19,11 +19,11 @@
                                  (logoot/insert-after site
                                                       clock
                                                       0
-                                                      "\bLogoot document yo")
+                                                      "Logoot document yo")
                                  (logoot/insert-after site
                                                       clock
                                                       0
-                                                      "\bLogoot document"))})))
+                                                      "Logoot document"))})))
 
 ;;;; App Helpers ;;;;
 
@@ -37,13 +37,18 @@
 
 ;;;; App Mutation Helpers ;;;;
 
+(defn line-content
+  "Given a doc, get the content of a line index"
+  [doc line]
+  (-> (vals doc)
+      (nth line)))
+
 (defn edit-line
   "Given a doc, change the content of a line based on the function applied
   to the current value of the line"
   [doc line f]
   (let [line-pid (logoot/index->pid doc line)
-        line-content (-> (vals doc)
-                         (nth line))]
+        line-content (line-content doc line)]
     (-> (delete doc line-pid)
         (insert-after (dec line) (f line-content)))))
 
@@ -59,6 +64,7 @@
   [s cursor length]
   (str (subs s 0 cursor) (subs s (+ cursor length))))
 
+;; TODO: split this function o.O
 (defn apply-delta
   "Apply Quill delta into a logoot-doc"
   [doc delta]
@@ -98,8 +104,12 @@
 
       (= :delete (-> ops first keys first))
       (let [length (-> ops first :delete)
-            new-doc (edit-line dc line #(delete-at %1 cursor length))]
-        (recur new-doc (rest ops) line (+ cursor length))))))
+            new-doc (edit-line dc line #(delete-at %1 cursor length))
+            new-line (line-content new-doc line)]
+        (if-not (= 0 (count new-line))
+          (recur new-doc (rest ops) line (+ cursor length))
+          (-> (delete new-doc (logoot/index->pid new-doc line))
+              (recur (rest ops) line (+ cursor length))))))))
 
 ;;;; Parser ;;;;
 
