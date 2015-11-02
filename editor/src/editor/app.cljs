@@ -104,7 +104,7 @@
       (= :retain (-> ops first keys first))
       (let [retain (-> ops first :retain)
             doc-line (-> dc vals (nth line))
-            doc-line-chars (-> doc-line count inc)]
+            doc-line-chars (-> doc-line count (#(if (= 0 %1) 1 %1)))]
         (cond
           ;; retain the entire line, but just it
           (= retain doc-line-chars)
@@ -123,7 +123,7 @@
       (= :insert (-> ops first keys first))
       (let [inserts (-> ops first :insert split-lines-with-empty)
             [new-doc line] (let [new-doc (if (= "" (first inserts))
-                                           (insert-after dc line "")
+                                           (insert-after dc (dec line) "")
                                            (edit-line dc line #(insert-at %1 cursor (first inserts))))]
                              (if-not (= 0 (count (rest inserts)))
                                [(insert-lines-at new-doc line (rest inserts))
@@ -135,10 +135,10 @@
       (let [length (-> ops first :delete)
             new-doc (edit-line dc line #(delete-at %1 cursor length))
             new-line (line-content new-doc line)]
-        (if-not (= 0 (count new-line))
-          (recur new-doc (rest ops) line (+ cursor length))
+        (if (= "" new-line)
           (-> (delete new-doc (logoot/index->pid new-doc line))
-              (recur (rest ops) line (+ cursor length))))))))
+              (recur (rest ops) line (+ cursor length)))
+          (recur new-doc (rest ops) line (+ cursor length)))))))
 
 ;;;; Parser ;;;;
 
