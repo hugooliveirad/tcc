@@ -104,11 +104,11 @@
       (= :retain (-> ops first keys first))
       (let [retain (-> ops first :retain)
             doc-line (-> dc vals (nth line))
-            doc-line-chars (-> doc-line count (#(if (= 0 %1) 1 %1)))]
+            doc-line-chars (-> doc-line count (#(if (= 0 %1) 1 %1)) (- cursor))]
         (cond
           ;; retain the entire line, but just it
           (= retain doc-line-chars)
-          (recur dc (rest ops) (inc line) 0)
+          (recur dc (rest ops) line retain)
 
           ;; retain the entire line, and more
           (> retain doc-line-chars)
@@ -123,7 +123,7 @@
       (= :insert (-> ops first keys first))
       (let [inserts (-> ops first :insert split-lines-with-empty)
             [new-doc line] (let [new-doc (if (= "" (first inserts))
-                                           (insert-after dc (dec line) "")
+                                           (insert-after dc line "")
                                            (edit-line dc line #(insert-at %1 cursor (first inserts))))]
                              (if-not (= 0 (count (rest inserts)))
                                [(insert-lines-at new-doc line (rest inserts))
@@ -132,13 +132,29 @@
         (recur new-doc (rest ops) line 0))
 
       (= :delete (-> ops first keys first))
-      (let [length (-> ops first :delete)
-            new-doc (edit-line dc line #(delete-at %1 cursor length))
-            new-line (line-content new-doc line)]
-        (if (= "" new-line)
-          (-> (delete new-doc (logoot/index->pid new-doc line))
-              (recur (rest ops) line (+ cursor length)))
-          (recur new-doc (rest ops) line (+ cursor length)))))))
+      (let [length (-> ops first :delete)]
+        (println length cursor)
+        (cond
+          ;; deleting the previous line-break
+          (and (= 1 length) (= 0 cursor))
+          (-> (edit-line dc (dec line) #(str %1 (line-content dc line)))
+              (delete dc (logoot/index->pid dc line)))
+
+          ;; deleting the next line-break
+          (= length cursor)
+          (-> (edit-line dc line #(str %1 (line-content dc (inc line))))
+              (delete dc (logoot/index->pid dc (inc line))))
+
+          ;; deleting the normal line content
+          :else
+          (let [new-doc (edit-line dc line #(delete-at %1 cursor length))
+                new-line (line-content new-doc line)]
+            (if (= "" new-line)
+              ;; line has no more content, delete it
+              (-> (delete new-doc (logoot/index->pid new-doc line))
+                  (recur (rest ops) line (+ cursor length)))
+              ;; normal delete
+              (recur new-doc (rest ops) line (+ cursor length)))))))))
 
 ;;;; Parser ;;;;
 
