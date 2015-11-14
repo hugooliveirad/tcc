@@ -8,7 +8,7 @@
   (componentDidMount [this]
                      (let [props (om/props this)
                            {:keys [on-text-change content]} props
-                           editor (js/Quill. "#editor")]
+                           editor (js/Quill. (om/react-ref this :editor))]
                        (when on-text-change
                          (.on editor "text-change" on-text-change))
                        (when content
@@ -26,5 +26,5 @@
                                  (.setText editor (:content next))
                                  (.setSelection editor selection))))
   (render [_]
-          (dom/div #js {:id "editor"} nil)))
+          (dom/div #js {:ref :editor} nil)))
 
