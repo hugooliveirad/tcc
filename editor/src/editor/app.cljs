@@ -116,7 +116,13 @@
       (-> params
           (update-in [:ops 0 :retain] #(- % doc-line-chars))
           (update-in [:line] inc)
-          (update-in [:cursor] (fn [_] 0))))))
+          (update-in [:cursor] (fn [_] 0)))
+
+      ;; retain less than the entire line
+      (< retain-chars doc-line-chars)
+      (-> params
+          (update-in [:cursor] #(+ % retain-chars))
+          (update-in [:ops] rest)))))
 
 
 (defmethod apply-delta-op :insert
