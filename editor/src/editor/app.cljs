@@ -87,74 +87,46 @@
   [s cursor length]
   (str (subs s 0 cursor) (subs s (+ cursor length))))
 
-;; TODO: split this function o.O
+;;;; Delta Helpers ;;;;
+
+(defn print-that [_] (println "that"))
+
+(defmulti apply-delta-op (fn [params] (-> params :ops first keys first)))
+
+(defmethod apply-delta-op :default [params] (println "default"))
+
+;; conditions of retain:
+;; - retain part of a line
+;; - retain entire line
+;; - retain entire line and more
+(defmethod apply-delta-op :retain
+  [{:keys [doc ops line cursor]}]
+  (let [retain-chars (-> ops first :retain)
+        doc-line (-> doc
+                     (line-content line)
+                     (subs cursor))]
+    (cond
+      ;; retain exactly the entire line
+      (= (count doc-line) retain-chars)
+      {:doc doc :ops (rest ops) :line (inc line) :cursor 0}))
+
+(defmethod apply-delta-op :insert
+  [params]
+  (println :insert))
+
+(defmethod apply-delta-op :delete
+  [params]
+  (println :delete))
+
 (defn apply-delta
   "Apply Quill delta into a logoot-doc"
   [doc delta]
-  (println "delta" delta)
-  (loop [dc doc
-         ops (:ops delta)
-         line 1
-         cursor 0]
-    (println "looping" dc ops line cursor)
-    (cond
-      (empty? ops)
-      dc
-
-      (= :retain (-> ops first keys first))
-      (let [retain (-> ops first :retain)
-            doc-line (-> dc vals (nth line))
-            doc-line-chars (-> doc-line count (#(if (= 0 %1) 1 %1)) (- cursor))]
-        (cond
-          ;; retain the entire line, but just it
-          (= retain doc-line-chars)
-          (recur dc (rest ops) line retain)
-
-          ;; retain the entire line, and more
-          (> retain doc-line-chars)
-          (recur dc (update-in ops [0 :retain] #(- % doc-line-chars)) (inc line) 0)
-
-          ;; retain part of the line
-          (< retain doc-line-chars)
-          (recur dc (rest ops) line retain)))
-
-      ;; TODO: make insert and delete work between multiple lines
-
-      (= :insert (-> ops first keys first))
-      (let [inserts (-> ops first :insert split-lines-with-empty)
-            [new-doc line] (let [new-doc (if (= "" (first inserts))
-                                           (insert-after dc line "")
-                                           (edit-line dc line #(insert-at %1 cursor (first inserts))))]
-                             (if-not (= 0 (count (rest inserts)))
-                               [(insert-lines-at new-doc line (rest inserts))
-                                (+ line (count (rest inserts)))]
-                               [new-doc line]))]
-        (recur new-doc (rest ops) line 0))
-
-      (= :delete (-> ops first keys first))
-      (let [length (-> ops first :delete)]
-        (println length cursor)
-        (cond
-          ;; deleting the previous line-break
-          (and (= 1 length) (= 0 cursor))
-          (-> (edit-line dc (dec line) #(str %1 (line-content dc line)))
-              (delete dc (logoot/index->pid dc line)))
-
-          ;; deleting the next line-break
-          (= length cursor)
-          (-> (edit-line dc line #(str %1 (line-content dc (inc line))))
-              (delete dc (logoot/index->pid dc (inc line))))
-
-          ;; deleting the normal line content
-          :else
-          (let [new-doc (edit-line dc line #(delete-at %1 cursor length))
-                new-line (line-content new-doc line)]
-            (if (= "" new-line)
-              ;; line has no more content, delete it
-              (-> (delete new-doc (logoot/index->pid new-doc line))
-                  (recur (rest ops) line (+ cursor length)))
-              ;; normal delete
-              (recur new-doc (rest ops) line (+ cursor length)))))))))
+  (loop [params {:doc doc :ops (:ops delta) :line 1 :cursor 0}]
+    (println (empty? (:ops params)))
+    (if (empty? (:ops params))
+        (:doc params)
+        (apply-delta-op params))
+    doc))
 
 ;;;; Parser ;;;;
 
