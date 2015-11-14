@@ -114,13 +114,19 @@
 
       ;; retain empty line (count as a char)
       (= 0 doc-line-chars)
-      (-> params
-          (update-in [:ops 0 :retain] dec)
-          (update-in [:line] inc))
+      (if (= 0 cursor)
+        ;; line not retained yet
+        (-> params
+            (update-in [:ops 0 :retain] dec)
+            (update-in [:cursor] inc))
+        ;; line already retained, jump to next
+        (-> params
+            (update-in [:cursor] (fn [_] 0))
+            (update-in [:line] inc)))
 
       ;; retain exactly the entire line
       (= retain-chars doc-line-chars)
-      {:doc doc :ops (rest ops) :line (inc line) :cursor 0}
+      {:doc doc :ops (rest ops) :line line :cursor doc-line-chars}
 
       ;; retain the entire line and more
       (> retain-chars doc-line-chars)
@@ -165,15 +171,20 @@
 
              ;; insert line-break
              (= "" (first insert-lines))
-             (let [r-cursor (:cursor r-params)
-                   r-line (:line r-params)]
-               (recur (-> r-params
-                          (update-in [:doc] #(insert-after %
-                                                           (if (= 0 r-cursor)
-                                                             (dec r-line)
-                                                             r-line)
-                                                           "")))
-                      (rest insert-lines)))
+             (let [r-doc (:doc r-params)
+                   r-cursor (:cursor r-params)
+                   r-line (:line r-params)
+                   line-c (line-content r-doc r-line)
+                   line-chars (count line-c)]
+               (println r-cursor line-chars line-c)
+               (cond
+                 ;; at the end of the line
+                 (or (= r-cursor line-chars) (= 0 line-chars))
+                 (recur (-> r-params
+                            (update-in [:doc] #(insert-after % (if (= 0 r-cursor) (inc r-line) r-line) ""))
+                            (update-in [:line] inc)
+                            (update-in [:cursor] (fn [_] 0)))
+                        (rest insert-lines))))
 
              :else
              (update-in r-params [:ops] rest)))))
