@@ -99,6 +99,7 @@
 ;; - retain part of a line
 ;; - retain entire line
 ;; - retain entire line and more
+;; - retain empty line
 (defmethod apply-delta-op :retain
   [{:keys [doc ops line cursor] :as params}]
   (let [retain-chars (-> ops first :retain)
@@ -107,6 +108,16 @@
                      (subs cursor))
         doc-line-chars (count doc-line)]
     (cond
+      ;; nothing to retain
+      (= 0 retain-chars)
+      (update-in params [:ops] rest)
+
+      ;; retain empty line (count as a char)
+      (= 0 doc-line-chars)
+      (-> params
+          (update-in [:ops 0 :retain] dec)
+          (update-in [:line] inc))
+
       ;; retain exactly the entire line
       (= retain-chars doc-line-chars)
       {:doc doc :ops (rest ops) :line (inc line) :cursor 0}
@@ -125,9 +136,37 @@
           (update-in [:ops] rest)))))
 
 
+;; conditions of insert:
+;; - insert normal chars
+;; - insert line-break
+;;   - beggining of the line
+;;   - middle of the line
+;;   - end of the line
 (defmethod apply-delta-op :insert
-  [params]
-  (println :insert))
+  [{:keys [doc ops line cursor] :as params}]
+  (let [insert-content (-> ops first :insert)]
+    ;; recursively add each needed line
+    (loop [r-params params
+           insert-lines (split-lines-with-empty insert-content)]
+           (cond
+             ;; already inserted all lines
+             (empty? insert-lines)
+             (update-in r-params [:ops] rest)
+
+             ;; insert line-break
+             (= "" (first insert-lines))
+             (let [r-cursor (:cursor r-params)
+                   r-line (:line r-params)]
+               (recur (-> r-params
+                          (update-in [:doc] #(insert-after %
+                                                           (if (= 0 r-cursor)
+                                                             (dec r-line)
+                                                             r-line)
+                                                           "")))
+                      (rest insert-lines)))
+
+             :else
+             (update-in r-params [:ops] rest)))))
 
 (defmethod apply-delta-op :delete
   [params]
