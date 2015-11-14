@@ -100,15 +100,24 @@
 ;; - retain entire line
 ;; - retain entire line and more
 (defmethod apply-delta-op :retain
-  [{:keys [doc ops line cursor]}]
+  [{:keys [doc ops line cursor] :as params}]
   (let [retain-chars (-> ops first :retain)
         doc-line (-> doc
                      (line-content line)
-                     (subs cursor))]
+                     (subs cursor))
+        doc-line-chars (count doc-line)]
     (cond
       ;; retain exactly the entire line
-      (= (count doc-line) retain-chars)
-      {:doc doc :ops (rest ops) :line (inc line) :cursor 0}))
+      (= retain-chars doc-line-chars)
+      {:doc doc :ops (rest ops) :line (inc line) :cursor 0}
+
+      ;; retain the entire line and more
+      (> retain-chars doc-line-chars)
+      (-> params
+          (update-in [:ops 0 :retain] #(- % doc-line-chars))
+          (update-in [:line] inc)
+          (update-in [:cursor] (fn [_] 0))))))
+
 
 (defmethod apply-delta-op :insert
   [params]
@@ -122,11 +131,10 @@
   "Apply Quill delta into a logoot-doc"
   [doc delta]
   (loop [params {:doc doc :ops (:ops delta) :line 1 :cursor 0}]
-    (println (empty? (:ops params)))
+    (println params)
     (if (empty? (:ops params))
         (:doc params)
-        (apply-delta-op params))
-    doc))
+        (recur (apply-delta-op params)))))
 
 ;;;; Parser ;;;;
 
