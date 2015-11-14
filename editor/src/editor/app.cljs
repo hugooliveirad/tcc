@@ -153,6 +153,16 @@
              (empty? insert-lines)
              (update-in r-params [:ops] rest)
 
+             ;; insert normal chars
+             (> (-> insert-lines first count) 0)
+             (let [r-cursor (:cursor r-params)
+                   r-line (:line r-params)
+                   r-insert-content (first insert-lines)]
+               (recur (-> r-params
+                          (update-in [:doc] #(edit-line % r-line (fn [content]
+                                                                   (insert-at content r-cursor r-insert-content)))))
+                      (rest insert-lines)))
+
              ;; insert line-break
              (= "" (first insert-lines))
              (let [r-cursor (:cursor r-params)
