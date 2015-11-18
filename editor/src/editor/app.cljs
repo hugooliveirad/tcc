@@ -176,7 +176,6 @@
                    r-line (:line r-params)
                    line-c (line-content r-doc r-line)
                    line-chars (count line-c)]
-               (println r-cursor line-chars line-c)
                (cond
                  ;; at the end of the line
                  (or (= r-cursor line-chars) (= 0 line-chars))

@@ -7,6 +7,3 @@
 (devtools/install!)
 (devtools/set-pref! :install-sanity-hints true)
 
-(defn main
-  []
-  (app/main))
