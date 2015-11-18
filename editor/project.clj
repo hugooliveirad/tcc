@@ -2,11 +2,10 @@
   :description "A collaborative editor"
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.170"]
-                 [org.omcljs/om "1.0.0-alpha9"]
+                 [org.omcljs/om "1.0.0-alpha22"]
                  [figwheel-sidecar "0.4.0" :scope "provided"]
                  [binaryage/devtools "0.4.0"]
-                 [cljsjs/quill "0.20.0-0"]
-                 [com.cemerick/piggieback "0.2.1"]]
+                 [cljsjs/quill "0.20.0-0"]]
 
   :plugins [[lein-cljsbuild "1.1.1"]
             [lein-figwheel "0.5.0-1"]]
@@ -25,9 +24,10 @@
                                         :asset-path "js"
                                         :pretty-print true}}
 
-                       :test {:source-paths ["src" "test"]
-                              :compiler {:output-to "resources/public/js/unit-test.js"
-                                         :output-dir "resources/public/js/out_test"
+                       :test {:main "editor.test"
+                              :source-paths ["src" "test"]
+                              :compiler {:output-to "resources/private/js/unit-test.js"
+                                         :optimizations :whitespace
                                          :pretty-print true}}}}
 
   :clean-targets ^{:protect false} ["resources/public/js"

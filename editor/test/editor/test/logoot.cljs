@@ -1,4 +1,4 @@
-(ns editor.logoot-test
+(ns editor.test.logoot
   (:require [cljs.test :as t]
             [editor.logoot :as sut]))
 
@@ -215,7 +215,8 @@
 
       (t/is (= document new-doc) "should alter document if pid don't exist"))))
 
-(t/run-tests)
+
+(defn run [] (t/run-tests))
 
 ;; FUTURE API ======================================
 
