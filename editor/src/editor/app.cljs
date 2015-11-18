@@ -183,6 +183,13 @@
                             (update-in [:doc] #(insert-after % (if (= 0 r-cursor) (inc r-line) r-line) ""))
                             (update-in [:line] inc)
                             (update-in [:cursor] (fn [_] 0)))
+                        (rest insert-lines))
+
+                 ;; at the beggining of the line
+                 (= 1 r-cursor)
+                 (recur (-> r-params
+                            (update-in [:doc] #(insert-after % (dec r-line) ""))
+                            (update-in [:line] inc))
                         (rest insert-lines))))
 
              :else
