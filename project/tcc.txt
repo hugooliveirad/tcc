@@ -1,0 +1,17 @@
+# TCC
+
+A difusão de dispositivos móveis leva, ano-a-ano, o acesso à internet para cada vez mais pessoas. Em 2015, existiam 3,2 bilhões de pessoas com acesso a internet no mundo e 2 bilhões destas estavam em países em desenvolvimento. **[segundo estudo da ICT]**.
+
+Os softwares e serviços utilizados nestes dispositivos precisam se adaptar a um novo ambiente computacional. *Smartphones* de baixo custo possuem pouco poder de processamento e redes utilizadas por dispositivos móveis são conhecidas por suas baixas velocidades e disponibilidade de conexão não-confiável.
+
+Garantir a consistência de dados entre dispositivos conectados por redes precárias é incompatível com uma arquitetura de sistema centralizada em apenas um servidor, já que a latência na rede pode degradar consideravelmente a experiência do usuário.
+
+Modelos de Forte Consistência Eventual (FCE) garantem melhor disponibilidade e performance em sistemas distribuídos, principalmente em redes com grande latência **[citar paper de CRDT]**. Isto é alcançado por atualizações serem realizadas em réplicas locais dos dados e eventualmente sincronizadas com outras réplicas dentro do sistema. Uma estrutura de dados compatível com as exigências de FCE é a CRDT (*Conflict-free Replicated Data Type*, em português Tipo de Dados Replicados Livre de Conflitos).
+
+CRDTs garantem a consistência dos dados pois operações realizadas nesta estrutura dados são comutativas. CRDTs baseadas em operações transmitem seu estado propagando operações de atualização realizadas. Estas operações devem ser comutativas. Para remover a necessidade de manter garantias de entrega única de mensagens de operação, as funções de operações de atualização também devem ser idempotentes e associativas.
+
+Com as garantias de uma CRDT com operações associativas, comutativas e idempotentes, é possível construir um sistema em uma arquitetura de rede em que as réplicas se comunicam diretamente e propagam atualizações de forma distribuída. Esta arquitetura de rede se chama *peer-to-peer* (P2P) **[referenciar paper p2p]**, onde cada participante da rede atua tanto como cliente (requisitando dados) quanto como servidor (servindo dados).
+
+No presente trabalho, utilizarei a CRDT Logoot (**citar corretamente Stéphane Weiss, Pascal Urso e Pascal Molli**) para implementar um Sistema de Edição Colaborativa distribuído em uma rede *peer-to-peer*. A Logoot utiliza simples identificadores de posição para atingir comutatividade e associatividade em operações de inserção e remoção, que podem ser executadas em qualquer réplica participante do sistema sem alterar a ordem das linhas do documento.
+
+Com o fim de facilitar a implementação da estrutura de dados Logoot, da interface de rede e do editor de texto necessários para o Sistema de Edição Colaborativa, utilizarei ClojureScript, uma linguagem de programação que segue o paradigma funcional, tirando proveito de suas estruturas de dados imutáveis e *atoms* (uma forma de gerenciar estado compartilhado).
