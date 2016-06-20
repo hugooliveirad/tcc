@@ -10,5 +10,6 @@ pom.xml.asc
 /resources/public/js
 /out
 /.repl
+.cljs_rhino_repl
 
 *.log
