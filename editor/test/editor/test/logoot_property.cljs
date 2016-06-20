@@ -11,10 +11,10 @@
 (def gen-pos
   (gen/vector
     (gen/vector gen/nat 2)
-    1 100))
+    1 10))
 
 (def gen-counter
-  gen/nat)
+  (gen/fmap str gen/uuid))
 
 (def gen-pid
   (gen/tuple
@@ -28,27 +28,41 @@
     gen/string))
 
 (def gen-ops
-  (gen/vector gen-op 1 50))
+  (gen/vector gen-op 1 10))
 
 (defn apply-op [doc [op pid content]]
   (condp = op
     :insert (e/insert doc pid content)
     :delete (e/delete doc pid)))
 
-(defn apply-ops [doc ops]
+(defn apply-ops [ops doc]
   (reduce apply-op doc ops))
 
 (def idempotent
   (prop/for-all 
     [ops gen-ops]
-    (is (= (apply-ops doc ops)
-           (apply-ops doc ops)))))
+    (is (= (apply-ops ops doc)
+           (apply-ops ops doc)))))
 
 (def commutative
   (prop/for-all
     [ops gen-ops]
-    (is (= (apply-ops doc ops)
-           (apply-ops doc (reverse ops))))))
+    (is (= (apply-ops ops doc)
+           (apply-ops (reverse ops) doc)))))
 
-(defspec idemponent? 10 idempotent)
-(defspec commutative? 10 commutative)
+(def associative
+  (prop/for-all 
+    [ops1 gen-ops
+     ops2 gen-ops
+     ops3 gen-ops]
+    (let [apply1 (partial apply-ops ops1)
+          apply2 (partial apply-ops ops2)
+          apply3 (partial apply-ops ops3)]
+      (is (= (apply1 (apply2 (apply3 doc)))
+             (apply2 (apply1 (apply3 doc)))
+             (apply3 (apply2 (apply1 doc))))))))
+
+(defspec idemponent? 30 idempotent)
+(defspec commutative? 30 commutative)
+(defspec associative? 30 associative)
+
