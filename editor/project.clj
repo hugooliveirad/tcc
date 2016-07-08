@@ -3,19 +3,19 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.76"]
                  [binaryage/devtools "0.7.0"]
-                 [reagent "0.6.0-rc"]
+                 [org.omcljs/om "1.0.0-alpha34"]
                  [org.clojure/test.check "0.9.0"]
                  [cljsjs/quill "0.20.0-1"]]
 
   :plugins [[lein-doo "0.1.6"]
-            [lein-figwheel "0.5.3-2"]
+            [lein-figwheel "0.5.4-7"]
             [lein-cljsbuild "1.1.1"]]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.4-3"]
                                   [com.cemerick/piggieback "0.2.1"]]}
              :user {:plugins [[lein-ancient "0.6.10"]]}}
 
-  :fighwheel {:css-dirs ["resources/public/css"]}
+  :figwheel {:css-dirs ["resources/public/css"]}
 
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 

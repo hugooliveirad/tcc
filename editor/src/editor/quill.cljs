@@ -1,9 +1,9 @@
 (ns editor.quill
-  #_(:require [cljsjs.quill]
+  (:require [cljsjs.quill]
             [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]))
 
-#_(defui Editor
+(defui Editor
   Object
   (componentDidMount [this]
                      (let [props (om/props this)

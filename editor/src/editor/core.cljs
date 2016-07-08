@@ -1,5 +1,5 @@
 (ns editor.core
-  (:require #_[editor.app :as app]
+  (:require [editor.app :as app]
             [devtools.core :as devtools]))
 
 (enable-console-print!)
