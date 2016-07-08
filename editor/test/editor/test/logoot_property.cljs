@@ -41,14 +41,14 @@
 (def idempotent
   (prop/for-all 
     [ops gen-ops]
-    (is (= (apply-ops ops doc)
-           (apply-ops ops doc)))))
+    (is (= (:content (apply-ops ops doc))
+           (:content (apply-ops ops doc))))))
 
 (def commutative
   (prop/for-all
     [ops gen-ops]
-    (is (= (apply-ops ops doc)
-           (apply-ops (reverse ops) doc)))))
+    (is (= (:content (apply-ops ops doc))
+           (:content (apply-ops (reverse ops) doc))))))
 
 (def associative
   (prop/for-all 
@@ -58,11 +58,11 @@
     (let [apply1 (partial apply-ops ops1)
           apply2 (partial apply-ops ops2)
           apply3 (partial apply-ops ops3)]
-      (is (= (apply1 (apply2 (apply3 doc)))
-             (apply2 (apply1 (apply3 doc)))
-             (apply3 (apply2 (apply1 doc))))))))
+      (is (= (:content (apply1 (apply2 (apply3 doc))))
+             (:content (apply2 (apply1 (apply3 doc))))
+             (:content (apply3 (apply2 (apply1 doc)))))))))
 
-(defspec idemponent? 30 idempotent)
-(defspec commutative? 30 commutative)
-(defspec associative? 30 associative)
+(defspec idempotent?  100 idempotent)
+(defspec commutative? 100 commutative)
+(defspec associative? 100 associative)
 
