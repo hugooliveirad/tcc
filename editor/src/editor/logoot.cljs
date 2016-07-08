@@ -1,36 +1,6 @@
 (ns editor.logoot
     (:require [clojure.string :as string]))
 
-;; (defonce conn
-;;   (repl/connect "http://localhost:9000/repl"))
-
-;; (enable-console-print!)
-
-;; logoot implementation in cljs
-
-;; insert(pos line)
-;; delete(pos)
-
-;; a document is defined by lines
-;; line: [pid content]
-;; a line identifier is a couple (pos, hs)
-;; pos: i(0).i(1)....i(n-1)
-;; hs: value of logical clock
-
-;; there are two virtual lines
-;; lb and le, to represent the beggining and the end of the document
-;; we always need to be able the generate a line A where P < A < N
-
-;; pids are unique
-;; pids: (pi, si)
-;; pi: integer
-;; si: site identifier
-
-;; a position is a list of identifier
-
-
-;; each site has a logical clock, incremented each time a line is created
-
 (def MAX_INT 32767)
 
 (defn compare-pid
@@ -55,33 +25,40 @@
 ;; a logoot document would be like
 
 (def document
-  ;; a hashmap were keys are the pid of the line
-  ;; and the values are the content
-  (sorted-map-by
-   ;; created with this sort fn
-   compare-pid
-   ;; vector of pid
-   ;;|line |site |clock
-   [[[0     0]]   nil]
-   ;; content
-   :lb
+  {:cemetery
+   ;; a hashmap that stores visibility degrees for keys in :content
+   {}
 
-   [[[2 1]] 0]
-   "This is an example of a Logoot document"
+   :content
+   ;; a hashmap were keys are the pid of the line
+   ;; and the values are the content
+   (sorted-map-by
+     ;; created with this sort fn
+     compare-pid
+     ;; vector of pid
+     ;;|line |site |clock
+     [[[0     0]]   nil]
+     ;; content
+     :lb
 
-   [[[1 1] [2 2]] 0]
-   "This is a line inserted between [1 1] and [2 2]"
+     [[[1 1]] 0] "a"
 
-   [[[MAX_INT 0]] nil]
-   :le))
+     [[[2 1]] 0] "b" 
+
+     [[[3 1]] 0] "c" 
+
+     [[[MAX_INT 0]] nil]
+     :le)
+   })
 
 (defn create-doc
   "Creates an empty logoot document, with its beggining and finish lines"
   []
-  (sorted-map-by
-   compare-pid
-   [[[0 0]] nil]       :lb
-   [[[MAX_INT 0]] nil] :le))
+  {:cemetery {}
+   :content (sorted-map-by
+              compare-pid
+              [[[0 0]] nil]       :lb
+              [[[MAX_INT 0]] nil] :le)})
 
 (defn zip
   "Creates a list of grouped elements by index"
@@ -164,25 +141,29 @@
 ;; (gen-pos 3 [[1 2]] [[1 2]]) ;; => [[1 2] [27335 3]]
 ;; (gen-pos 3 [[1 2]] [[5 2]]) ;; => [[2 3]]
 
+(defn doc-keys
+  "Returns all the keys from the :content"
+  [doc]
+  (-> doc :content keys))
 
 (defn pid->index
   "Returns the index of a given pid"
   [doc pid]
-  (first (keep-indexed #(if (= pid %2) %1) (keys doc))))
+  (first (keep-indexed #(if (= pid %2) %1) (doc-keys doc))))
 
 ;; (pid->index document [[[1 1] [2 2]] 0])
 
 (defn index->pid
   "Returns the pid of a given index"
   [doc index]
-  (nth (keys doc) index nil))
+  (nth (doc-keys doc) index nil))
 
 ;; (index->pid document 1)
 
 (defn insert
   "Inserts the content into pid key of the given document"
   [doc pid content]
-  (assoc doc pid content))
+  (assoc-in doc [:content pid] content))
 
 ;; in this case, should this position be even possible? would it be before or after [[2 1]]?
 ;; (insert document [[[1 2] [3 4]] 5] "New content")
@@ -192,16 +173,17 @@
   [doc site clock index content]
   (let [[pos1] (index->pid doc index)
         [pos2] (index->pid doc (inc index))]
-    (->> (gen-pos site pos1 pos2)
-         (#(conj [] % clock))
-         (#(insert doc % content)))))
+    (as-> 
+      (gen-pos site pos1 pos2) $
+      (conj [] $ clock)
+      (insert doc $ content))))
 
 ;; (insert-after document 2 20 0 "yo!")
 
 (defn delete
   "Removes pid key from the given document"
   [doc pid]
-  (dissoc doc pid))
+  (update doc :content dissoc pid))
 
 ;; (delete document [[[2 1]] 0])
 
@@ -210,7 +192,7 @@
   [doc]
   (map (fn [[[pos clock] content]]
          {:pos pos :clock clock :content content})
-       doc))
+       (:content doc)))
 
 (defn pos->logoot-str
   "Given a position, returns a string representation of it"
@@ -218,8 +200,7 @@
   (->> pos
        (map (partial string/join ", "))
        (map (fn [x] (str "[" x "]")))
-       (string/join ".")
-       ))
+       (string/join ".")))
 
 (defn doc->logoot-str
   "Given a logoot document, returns a string representation of it"
@@ -232,8 +213,7 @@
        (map (fn [line]
                 (->> (:pos line)
                      (pos->logoot-str)
-                     (assoc line :pos)
-                     )))
+                     (assoc line :pos))))
 
        ;; merge position strings and more infos into logoot-str
        (map (fn [line]

@@ -59,7 +59,7 @@
       (t/is (= -1 (sut/compare-pid pid-many-sites-medium pid-big))))))
 
 (t/deftest testing-create-doc
-  (let [doc (sut/create-doc)]
+  (let [doc (:content (sut/create-doc))]
 
     (t/testing "simple"
       (t/is (= (empty doc) {})))
@@ -71,10 +71,7 @@
       (t/is (= :lb (second (first doc))))
 
       (t/is (= [[[MAX_INT 0]] nil] (first (second doc))))
-      (t/is (= :le (second (second doc)))))
-
-    (t/testing "sorting"
-      (t/is (= [[[1 1]] 0] (first (second (sut/insert doc [[[1 1]] 0] "Test"))))))))
+      (t/is (= :le (second (second doc)))))))
 
 (t/deftest testing-zip
   (t/testing "accept any seq"
@@ -190,7 +187,7 @@
         new-doc (sut/insert (sut/create-doc) pid "Yo")]
 
     (t/is (= 1 (sut/pid->index new-doc pid)) "the second line")
-    (t/is (= "Yo" (nth (vals new-doc) 1)))))
+    (t/is (= "Yo" (-> new-doc :content vals (nth 1))))))
 
 (t/deftest testing-insert-after
   (let [doc (sut/create-doc)
@@ -200,14 +197,14 @@
         content "Yo"
         new-doc (sut/insert-after doc site clock index content)]
 
-    (t/is (= 3 (count new-doc)) "a document with three lines")
-    (t/is (= content (nth (vals new-doc) 1)) "second line the one we added")))
+    (t/is (= 3 (-> new-doc :content count)) "a document with three lines")
+    (t/is (= content (-> new-doc :content vals (nth 1))) "second line the one we added")))
 
 (t/deftest testing-delete
   (t/testing "removed"
     (let [new-doc (sut/delete document [[[1 2]] 0])]
 
-      (t/is (= 4 (count new-doc)) "removes a line")
+      (t/is (= 4 (-> new-doc :content count)) "removes a line")
       (t/is (nil? (sut/pid->index new-doc [[[1 2]] 0])) "removes the specified line")))
 
   (t/testing "not removed"

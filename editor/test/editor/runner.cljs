@@ -4,4 +4,4 @@
             [editor.test.logoot-property]))
 
 (doo-tests 'editor.test.logoot
-           'editor.test.logoot-property)
+           #_'editor.test.logoot-property)
