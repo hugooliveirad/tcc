@@ -160,10 +160,27 @@
 
 ;; (index->pid document 1)
 
+(defn degree
+  "Returns the visibility degree of a pid. 0 if not in cemetery."
+  [doc pid]
+  (if-let [d (get-in doc [:cemetery pid])]
+    d
+    0))
+
+(defn assoc-degree
+  "Assoc a visibility degree to a pid"
+  [doc pid degree]
+  (if (= 0 degree)
+    (update doc :cemetery dissoc pid)
+    (assoc-in doc [:cemetery pid] degree)))
+
 (defn insert
   "Inserts the content into pid key of the given document"
   [doc pid content]
-  (assoc-in doc [:content pid] content))
+  (let [d (inc (degree doc pid))]
+    (if (= d 1)
+      (assoc-in doc [:content pid] content)
+      (assoc-degree doc pid d))))
 
 ;; in this case, should this position be even possible? would it be before or after [[2 1]]?
 ;; (insert document [[[1 2] [3 4]] 5] "New content")
@@ -183,7 +200,11 @@
 (defn delete
   "Removes pid key from the given document"
   [doc pid]
-  (update doc :content dissoc pid))
+  (if (pid->index doc pid)
+    (-> doc
+        (update :content dissoc pid)
+        (assoc-degree pid 0))
+    (assoc-degree doc pid (dec (degree doc pid)))))
 
 ;; (delete document [[[2 1]] 0])
 

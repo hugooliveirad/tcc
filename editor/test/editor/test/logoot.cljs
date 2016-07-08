@@ -182,12 +182,27 @@
   (t/is (= [[[2 2]] 0] (sut/index->pid document 2)) "correct pid")
   (t/is (nil? (sut/index->pid document 6)) "nil pid"))
 
+(defn log [x] (prn x) x)
+
 (t/deftest testing-insert
   (let [pid [[[1 2]] 0]
         new-doc (sut/insert (sut/create-doc) pid "Yo")]
 
     (t/is (= 1 (sut/pid->index new-doc pid)) "the second line")
-    (t/is (= "Yo" (-> new-doc :content vals (nth 1))))))
+    (t/is (= "Yo" (-> new-doc :content vals (nth 1)))))
+  
+  (t/testing "cemetery entries"
+    (let [pid1 [[[1 2]] 0]
+          pid2 [[[2 2]] 1]
+          pid3 [[[3 2]] 2]
+          new-doc (-> (sut/create-doc) 
+                      (sut/insert pid1)
+                      (sut/delete pid2)
+                      (sut/insert pid2 "Yo")
+                      (sut/delete pid3))] 
+      (t/is (= 0 (sut/degree new-doc pid1)))
+      (t/is (= 0 (sut/degree new-doc pid2)))
+      (t/is (= -1 (sut/degree new-doc pid3))))))
 
 (t/deftest testing-insert-after
   (let [doc (sut/create-doc)
@@ -201,19 +216,18 @@
     (t/is (= content (-> new-doc :content vals (nth 1))) "second line the one we added")))
 
 (t/deftest testing-delete
-  (t/testing "removed"
-    (let [new-doc (sut/delete document [[[1 2]] 0])]
+  (t/testing "in the document"
+    (let [pid [[[1 2]] 0]
+          new-doc (sut/delete document pid)]
 
       (t/is (= 4 (-> new-doc :content count)) "removes a line")
-      (t/is (nil? (sut/pid->index new-doc [[[1 2]] 0])) "removes the specified line")))
+      (t/is (nil? (sut/pid->index new-doc pid)) "removes the specified line")
+      (t/is (= 0 (sut/degree new-doc pid)) "is out of cemetery")))
 
-  (t/testing "not removed"
-    (let [new-doc (sut/delete document [[[111111 1]] 0])]
-
-      (t/is (= document new-doc) "should alter document if pid don't exist"))))
-
-
-(defn run [] (t/run-tests))
+  (t/testing "not in the document"
+    (let [pid [[[11111 1]] 0]
+          new-doc (sut/delete document pid)]
+      (t/is (= -1 (sut/degree new-doc pid)) "should be in cemetery if pid don't exist"))))
 
 ;; FUTURE API ======================================
 
