@@ -136,7 +136,6 @@
   (render [this]
           (let [doc (-> this om/props :doc)
                 cursor (-> this om/props :cursor)]
-            (.log js/console "app cursor" cursor)
             (dom/div nil
                      (editor {:cursor cursor
                               :content
