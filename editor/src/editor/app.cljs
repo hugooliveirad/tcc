@@ -5,23 +5,24 @@
             [goog.dom :as gdom]
             [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]
-            [clojure.string :refer [split-lines join]]))
+            [clojure.string :refer [join]]))
 
 ;;;; App State ;;;;
 
 (def app-state (let [site (rand-int 1000)
                      clock 0]
                  (atom {:site site
-                        :clock 0
+                        :clock 2
+                        :cursor 0
                         :doc (-> (logoot/create-doc)
                                  (logoot/insert-after site
-                                                      clock
                                                       0
-                                                      "Logoot document yo")
+                                                      0
+                                                      "a")
                                  (logoot/insert-after site
-                                                      clock
-                                                      0
-                                                      "Logoot document"))})))
+                                                      1
+                                                      1
+                                                      "b"))})))
 
 ;;;; App Helpers ;;;;
 
@@ -33,99 +34,53 @@
 (def insert-after (create-insert-after (:site @app-state)))
 (def delete logoot/delete)
 
-;;;; App Mutation Helpers ;;;;
-
-(defn line-content
-  "Given a doc, get the content of a line index"
-  [doc line]
-  (-> (vals doc)
-      (nth line)))
-
-(defn split-lines-with-empty
-  "Split lines, but also split empty lines"
-  [s]
-  (->> (map identity s)
-       (map #(if (= %1 "\n") " \n " %1))
-       clojure.string/join
-       clojure.string/split-lines
-       (map clojure.string/trim)
-       (#(if (= "" (last %1))
-           (butlast %1)
-           %1))))
-
-(defn edit-line
-  "Given a doc, change the content of a line based on the function applied
-  to the current value of the line"
-  [doc line f]
-  (let [line-pid (logoot/index->pid doc line)
-        line-content (line-content doc line)]
-    (-> (delete doc line-pid)
-        (insert-after (dec line) (f line-content)))))
-
-(defn insert-lines-at
-  "Insert lines in a given document in after the given line index"
-  [doc index lines]
-  (-> (reduce (fn [[doc index] insert]
-                [(insert-after doc (dec index) insert)
-                 (inc index)])
-              [doc
-               (inc index)]
-              lines)
-      first))
-
-(defn insert-at
-  "Insert content inside a s[tring] into the cursor position"
-  [s cursor content]
-  (let [start (subs s 0 cursor)
-        end (subs s cursor)]
-    (str start content end)))
-
-(defn delete-at
-  "Deletes length character from content of s[tring] after cursor"
-  [s cursor length]
-  (str (subs s 0 cursor) (subs s (+ cursor length))))
-
 ;;;; Delta Helpers ;;;;
 
 (defn print-that [_] (println "that"))
 
-(defmulti apply-delta-op (fn [params] (-> params :ops first keys first)))
+(defmulti apply-delta-op (fn [params] 
+                           (-> params :ops first keys first)))
 
-(defmethod apply-delta-op :default [params] (println "default"))
+(defmethod apply-delta-op :default [params] (.log js/console params) (assoc params :ops []))
 
-;; conditions of retain:
-;; - retain part of a line
-;; - retain entire line
-;; - retain entire line and more
-;; - retain empty line
 (defmethod apply-delta-op :retain
-  [{:keys [doc ops line cursor] :as params}]
-  (println :retain)
-  (assoc params :ops []))
+  [{:keys [doc ops cursor] :as params}]
+  (.log js/console :retain params)
+  (-> params
+      (update :cursor + (-> ops first :retain))
+      (update :ops (comp vec rest))))
 
-;; conditions of insert:
-;; - insert normal chars
-;; - insert line-break
-;;   - beggining of the line
-;;   - middle of the line
-;;   - end of the line
 (defmethod apply-delta-op :insert
-  [{:keys [doc ops line cursor] :as params}]
-  (println :insert)
-  (assoc params :ops []))
+  [{:keys [doc ops cursor] :as params}]
+  (.log js/console :insert params)
+  (let [to-insert (-> ops first :insert)]
+    (if (empty? to-insert)
+      (update params :ops rest)
+      (-> params
+          (update :doc insert-after cursor (first to-insert))
+          (update :cursor inc)
+          (update :ops vec)
+          (update-in [:ops 0 :insert] (comp (partial join "") rest))))))
 
 (defmethod apply-delta-op :delete
-  [params]
-  (println :delete)
-  (assoc params :ops []))
+  [{:keys [doc ops cursor] :as params}]
+  (.log js/console :delete params)
+  (let [to-delete (-> ops first :delete)]
+    (if (zero? to-delete)
+      (update params :ops rest)
+      (let [pid (logoot/index->pid doc (inc cursor))]
+        (-> params
+            (update :doc delete pid)
+            (update :ops vec)
+            (update-in [:ops 0 :delete] dec))))))
 
 (defn apply-delta
   "Apply Quill delta into a logoot-doc"
   [doc delta]
-  (loop [params {:doc doc :ops (:ops delta) :line 1 :cursor 0}]
+  (loop [params {:doc doc :ops (vec (:ops delta)) :cursor 0}]
     (if (empty? (:ops params))
-        (:doc params)
-        (recur (apply-delta-op params)))))
+      params
+      (recur (apply-delta-op params)))))
 
 ;;;; Parser ;;;;
 
@@ -142,7 +97,12 @@
   [{:keys [state]} _ {:keys [delta source]}]
   (when (= source "user")
     {:value {:keys [:doc]}
-     :action #(swap! state update-in [:doc] (fn [doc] (apply-delta doc delta)))}))
+     :action #(swap! state 
+                     (fn [state]
+                       (let [new-state (apply-delta (:doc state) delta)]
+                         (assoc state 
+                                :doc (:doc new-state)
+                                :cursor (:cursor new-state)))))}))
 
 (def app-parser (om/parser {:read read :mutate mutate}))
 
@@ -171,18 +131,22 @@
 (defui App
   static om/IQuery
   (query [this]
-         [:doc])
+         [:doc :cursor])
   Object
   (render [this]
-          (let [doc (-> this om/props :doc)]
+          (let [doc (-> this om/props :doc)
+                cursor (-> this om/props :cursor)]
+            (.log js/console "app cursor" cursor)
             (dom/div nil
-                     (editor {:content
+                     (editor {:cursor cursor
+                              :content
                               (->> doc
                                    :content
                                    vals
                                    rest
                                    butlast
-                                   (join "\n"))
+                                   (join "")
+                                   (#(str % "\n")))
                               :on-text-change
                               #(apply-delta! {:ops (js->clj (aget %1 "ops") :keywordize-keys true)} %2)})
                      (debugger {:doc (-> this om/props :doc)})

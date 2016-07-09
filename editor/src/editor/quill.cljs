@@ -19,12 +19,15 @@
   ;; maybe we should look for ways to avoid this, by transforming updates
   ;; into deltas, and letting Quill handle when it should update its content
   (componentWillReceiveProps [this next]
+                             #_(do (.log js/console "received props"))
                              (when (not= (-> this om/props :content)
                                          (-> next :content))
                                (let [editor (om/get-state this :editor)
-                                     selection (.getSelection editor)]
+                                     selection (.getSelection editor)
+                                     cursor (-> next :cursor)]
+                                 (.log js/console cursor)
                                  (.setText editor (:content next))
-                                 (.setSelection editor selection))))
+                                 (.setSelection editor cursor cursor))))
   (render [_]
           (dom/div #js {:ref :editor} nil)))
 
