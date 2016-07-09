@@ -12,7 +12,7 @@
 (def app-state (let [site (rand-int 1000)
                      clock 0]
                  (atom {:site site
-                        :clock 2
+                        :clock 1
                         :cursor 0
                         :doc (-> (logoot/create-doc)
                                  (logoot/insert-after site
@@ -28,8 +28,8 @@
 
 (defn create-insert-after
   [site]
-  (fn [doc index content]
-    (logoot/insert-after doc site (:clock @app-state) index content)))
+  (fn [doc index content clock]
+    (logoot/insert-after doc site clock index content)))
 
 (def insert-after (create-insert-after (:site @app-state)))
 (def delete logoot/delete)
@@ -53,11 +53,13 @@
 (defmethod apply-delta-op :insert
   [{:keys [doc ops cursor] :as params}]
   (.log js/console :insert params)
-  (let [to-insert (-> ops first :insert)]
+  (let [to-insert (-> ops first :insert)
+        clock (-> params :clock inc)]
     (if (empty? to-insert)
       (update params :ops rest)
       (-> params
-          (update :doc insert-after cursor (first to-insert))
+          (assoc :clock clock)
+          (update :doc insert-after cursor (first to-insert) clock)
           (update :cursor inc)
           (update :ops vec)
           (update-in [:ops 0 :insert] (comp (partial join "") rest))))))
@@ -76,8 +78,8 @@
 
 (defn apply-delta
   "Apply Quill delta into a logoot-doc"
-  [doc delta]
-  (loop [params {:doc doc :ops (vec (:ops delta)) :cursor 0}]
+  [doc clock delta]
+  (loop [params {:doc doc :ops (vec (:ops delta)) :clock clock :cursor 0}]
     (if (empty? (:ops params))
       params
       (recur (apply-delta-op params)))))
@@ -99,9 +101,10 @@
     {:value {:keys [:doc]}
      :action #(swap! state 
                      (fn [state]
-                       (let [new-state (apply-delta (:doc state) delta)]
+                       (let [new-state (apply-delta (:doc state) (:clock state) delta)]
                          (assoc state 
                                 :doc (:doc new-state)
+                                :clock (:clock new-state)
                                 :cursor (:cursor new-state)))))}))
 
 (def app-parser (om/parser {:read read :mutate mutate}))
