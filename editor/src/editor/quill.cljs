@@ -18,7 +18,7 @@
   ;; as it forces the update of the editor, loosing its typing context.
   ;; maybe we should look for ways to avoid this, by transforming updates
   ;; into deltas, and letting Quill handle when it should update its content
-  (componentWillReceiveProps [this next]
+  #_(componentWillReceiveProps [this next]
                              (when (not= (-> this om/props :content)
                                          (-> next :content))
                                (let [editor (om/get-state this :editor)
