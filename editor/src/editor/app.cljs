@@ -13,15 +13,7 @@
     (r/atom {:site site
              :clock 1
              :cursor 0
-             :doc (-> (logoot/create-doc)
-                      (logoot/insert-after site
-                                           0
-                                           0
-                                           "a")
-                      (logoot/insert-after site
-                                           1
-                                           1
-                                           "b"))})))
+             :doc (logoot/create-doc)})))
 
 ;;;; App Helpers ;;;;
 
