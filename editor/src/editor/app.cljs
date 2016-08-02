@@ -1,28 +1,27 @@
 (ns editor.app
   (:require [editor.logoot :as logoot]
             [editor.selection :as selection]
-            [editor.quill :as quill]
-            [goog.dom :as gdom]
-            [om.next :as om :refer-macros [defui]]
-            [om.dom :as dom]
+            [editor.quill :refer [editor]]
+            [reagent.core :as r]
             [clojure.string :refer [join]]))
 
 ;;;; App State ;;;;
 
-(def app-state (let [site (rand-int 1000)
-                     clock 0]
-                 (atom {:site site
-                        :clock 1
-                        :cursor 0
-                        :doc (-> (logoot/create-doc)
-                                 (logoot/insert-after site
-                                                      0
-                                                      0
-                                                      "a")
-                                 (logoot/insert-after site
-                                                      1
-                                                      1
-                                                      "b"))})))
+(def app-state& 
+  (let [site (rand-int 1000)
+        clock 0]
+    (r/atom {:site site
+             :clock 1
+             :cursor 0
+             :doc (-> (logoot/create-doc)
+                      (logoot/insert-after site
+                                           0
+                                           0
+                                           "a")
+                      (logoot/insert-after site
+                                           1
+                                           1
+                                           "b"))})))
 
 ;;;; App Helpers ;;;;
 
@@ -31,7 +30,7 @@
   (fn [doc index content clock]
     (logoot/insert-after doc site clock index content)))
 
-(def insert-after (create-insert-after (:site @app-state)))
+(def insert-after (create-insert-after (:site @app-state&)))
 (def delete logoot/delete)
 
 ;;;; Delta Helpers ;;;;
@@ -84,77 +83,45 @@
       params
       (recur (apply-delta-op params)))))
 
-;;;; Parser ;;;;
+(defn apply-event
+  "Apply a given event to the state, when source is user"
+  [state event source]
+  (if-not (= source "user")
+    state
+    (let [delta {:ops (js->clj (aget event "ops") :keywordize-keys true)}
+          new-state (apply-delta (:doc state) (:clock state) delta)]
+      (assoc state
+             :doc (:doc new-state)
+             :clock (:clock new-state)
+             :cursor (:cursor new-state)))))
 
-(defn read
-  [{:keys [state] :as env} key params]
-  (let [st @state]
-    (if-let [[_ v] (find st key)]
-      {:value v}
-      {:value :not-found})))
-
-(defmulti mutate om/dispatch)
-
-(defmethod mutate 'editor.app/apply-delta
-  [{:keys [state]} _ {:keys [delta source]}]
-  (when (= source "user")
-    {:value {:keys [:doc]}
-     :action #(swap! state 
-                     (fn [state]
-                       (let [new-state (apply-delta (:doc state) (:clock state) delta)]
-                         (assoc state 
-                                :doc (:doc new-state)
-                                :clock (:clock new-state)
-                                :cursor (:cursor new-state)))))}))
-
-(def app-parser (om/parser {:read read :mutate mutate}))
-
-;;;; Reconciler ;;;;
-
-(def reconciler
-  (om/reconciler
-   {:state app-state
-    :parser app-parser}))
-
-;;;; App Transactions ;;;;
-
-(defn apply-delta!
-  "Apply a given delta to the state document"
-  [delta source]
-  (om/transact! reconciler `[(apply-delta ~{:delta delta :source source})]))
+(defn apply-event!
+  "Apply a given event to the state atom"
+  [state& event source]
+  (swap! state& #(apply-event %1 event source)))
 
 ;;;; App Components ;;;;
 
-(defn debugger
-  [{:keys [doc] :as props}]
-  (dom/pre nil (->> doc logoot/doc->logoot-str)))
+(defn logoot->content
+  [doc]
+  (->> doc
+       :content
+       vals
+       rest
+       butlast
+       (join "")
+       (#(str % "\n"))))
 
-(def editor (om/factory quill/Editor))
+(defn app
+  [props children]
+  (let [app-state& (:app-state props)
+        {:keys [doc cursor]} @app-state&
+        content (logoot->content doc)]
+    [:div
+     [editor {:cursor cursor
+              :content content
+              :on-text-change (partial apply-event! app-state&)}]]))
 
-(defui App
-  static om/IQuery
-  (query [this]
-         [:doc :cursor])
-  Object
-  (render [this]
-          (let [doc (-> this om/props :doc)
-                cursor (-> this om/props :cursor)]
-            (dom/div nil
-                     (editor {:cursor cursor
-                              :content
-                              (->> doc
-                                   :content
-                                   vals
-                                   rest
-                                   butlast
-                                   (join "")
-                                   (#(str % "\n")))
-                              :on-text-change
-                              #(apply-delta! {:ops (js->clj (aget %1 "ops") :keywordize-keys true)} %2)})
-                     (debugger {:doc (-> this om/props :doc)})
-                     (dom/pre nil (:cemetery (-> this om/props :doc)))))))
-
-;;;; Root ;;;;
-
-(om/add-root! reconciler
-              App (gdom/getElement "app"))
+(r/render-component 
+  [app {:app-state app-state&}]
+  (.getElementById js/document "app"))
