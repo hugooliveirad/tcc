@@ -9,7 +9,7 @@
   [[pos1] [pos2]]
   ;; 1 if (> (nth 0 pos1) (nth 0 pos2)), -1 if not. if 0, will iterate
   ;; going up until the end of the position vector
-  (if (= [pos1] [pos2])
+  (if (= pos1 pos2)
     0
     (if-let [result (first (filter #(not= 0 %)
                                    (map compare pos1 pos2)))]

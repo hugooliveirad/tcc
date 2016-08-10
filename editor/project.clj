@@ -1,6 +1,7 @@
 (defproject editor "0.2.0-SNAPSHOT"
   :description "A collaborative editor"
   :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/test.check "0.9.0"]
                  [org.clojure/clojurescript "1.9.76"]
                  [binaryage/devtools "0.7.0"]
                  [reagent "0.6.0-rc"]
